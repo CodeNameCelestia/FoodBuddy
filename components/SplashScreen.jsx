@@ -12,7 +12,7 @@ const SplashScreen = () => {
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 1000,
+        duration: 500,
         useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.spring(scale, {
@@ -26,19 +26,19 @@ const SplashScreen = () => {
         Animated.parallel([
           Animated.timing(opacity, {
             toValue: 0,
-            duration: 500,
+            duration: 300,
             useNativeDriver: Platform.OS !== 'web',
           }),
           Animated.timing(scale, {
-            toValue: 0.8,
-            duration: 500,
+            toValue: 0.9,
+            duration: 1000,
             useNativeDriver: Platform.OS !== 'web',
           }),
         ]).start(() => {
           // After exit animation, navigate to Home
           router.replace('/');
         });
-      }, 2000);
+      }, 1500);
     });
   }, [opacity, scale, router]);
 
@@ -61,17 +61,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
+    width: 150,
+    height: 150,
+    marginBottom: 25,
   },
   appName: {
-    fontSize: 32,
+    fontSize: 35,
     fontWeight: 'bold',
     color: '#fff',
   },
   creator: {
-    fontSize: 16,
+    fontSize: 19,
+    fontWeight: 'bold',
     color: '#fff',
     marginTop: 10,
   },

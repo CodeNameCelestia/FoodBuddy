@@ -133,6 +133,6 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -15 }], // pop out more so half is out of the navbar
   },
   tabLabel: {
-    fontSize: 12,
+    fontSize: 11,
   },
 });

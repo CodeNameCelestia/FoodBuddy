@@ -41,10 +41,8 @@ const CreateRecipe = () => {
 
   const pickImage = async (source) => {
     let result;
-    const mediaType =
-      Platform.OS === 'web'
-        ? ImagePicker.MediaTypeOptions.Images
-        : ImagePicker.MediaType.Images;
+    // Use the correct constant for selecting images on all platforms
+    const mediaType = ImagePicker.MediaTypeOptions.Images;
     if (source === 'camera') {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
@@ -53,7 +51,7 @@ const CreateRecipe = () => {
       }
       result = await ImagePicker.launchCameraAsync({
         mediaTypes: mediaType,
-        quality: 1,
+        quality: 0.7,
       });
     } else {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -63,7 +61,7 @@ const CreateRecipe = () => {
       }
       result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: mediaType,
-        quality: 1,
+        quality: 0.7,
       });
     }
     if (!result.canceled) {
@@ -97,7 +95,6 @@ const CreateRecipe = () => {
       image,
     };
     await database.addRecipe(newRecipe);
-    Alert.alert('Success', 'Recipe added successfully!');
     router.push('/');
   };
 
@@ -244,9 +241,8 @@ export default CreateRecipe;
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    paddingBottom: 0, // Removed extra bottom padding
+    paddingBottom: 0,
   },
-  /* Fixed Header */
   fixedHeader: {
     position: 'absolute',
     top: 0,
@@ -274,7 +270,7 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flex: 1,
-    flexDirection: 'row', // Icon and title side by side
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -287,7 +283,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
   },
-  /* Form Title */
   formTitle: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -295,7 +290,6 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     color: '#F8D64E',
   },
-  /* Form Section */
   form: {
     paddingHorizontal: 16,
   },
@@ -381,7 +375,6 @@ const styles = StyleSheet.create({
     color: '#ccc',
     marginTop: 8,
   },
-  /* Inline Form Buttons */
   formButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',

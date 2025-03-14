@@ -16,6 +16,8 @@ import database from "../database/database";
 import EditMoodModal from "../components/EditMoodModal";
 import EditRecipeForm from "../components/EditRecipeForm";
 import RemoveAlert from "../components/RemoveAlert";
+import SuccessAlert from "../components/SuccessAlert";
+import ErrorAlert from "../components/ErrorAlert";
 
 const RecipeDetail = () => {
   const { id } = useLocalSearchParams();
@@ -26,6 +28,8 @@ const RecipeDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Edit mode state and edit fields
+  const [SuccessAlert, setSuccessAlertVisible] = useState(false);
+  const [ErrorAlert, setErrorAlertVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
@@ -201,9 +205,19 @@ const RecipeDetail = () => {
       await database.updateRecipe(updatedRecipe);
       setRecipeData(updatedRecipe);
       setIsEditing(false);
-      Alert.alert("Success", "Recipe updated successfully");
+      
+      <SuccessAlert
+      visible={setSuccessAlertVisible}
+      onClose={() => setSuccessAlertVisible(false)}
+      />
+
     } catch (error) {
-      Alert.alert("Error", "Failed to update recipe");
+
+      <ErrorAlert
+      visible={setErrorAlertVisible}
+      onClose={() => setErrorAlertVisible(false)}
+      />
+
     }
   };
 

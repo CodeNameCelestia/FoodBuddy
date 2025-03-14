@@ -24,13 +24,18 @@ const saveRecipes = async (recipes) => {
 const addRecipe = async (recipe) => {
   const recipes = await getRecipes();
   recipe.id = Date.now().toString();
+  recipe.date = new Date().toISOString(); // creation date
+  recipe.favorite = false; // default favorite state
+  recipe.hidden = false;   // default hidden state
   recipes.push(recipe);
   await saveRecipes(recipes);
 };
 
 const updateRecipe = async (updatedRecipe) => {
   let recipes = await getRecipes();
-  recipes = recipes.map((recipe) => (recipe.id === updatedRecipe.id ? updatedRecipe : recipe));
+  recipes = recipes.map((recipe) =>
+    recipe.id === updatedRecipe.id ? updatedRecipe : recipe
+  );
   await saveRecipes(recipes);
 };
 
@@ -56,5 +61,5 @@ export default {
   updateRecipe,
   deleteRecipe,
   getRecipeById,
-  getRecipesByMood
+  getRecipesByMood,
 };

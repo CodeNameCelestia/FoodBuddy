@@ -1,91 +1,105 @@
-import React, { useEffect, useState } from 'react';
-import { 
+import React, { useEffect, useState } from "react";
+import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Image,
   TouchableOpacity,
-  TextInput,
+  Platform,
   Alert,
-  Modal,
-  Platform
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import database from '../database/database';
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import database from "../database/database";
+import EditMoodModal from "../components/EditMoodModal";
+import EditRecipeForm from "../components/EditRecipeForm";
+import RemoveAlert from "../components/RemoveAlert";
 
 const RecipeDetail = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+
+  // State for recipe data and loading
   const [recipeData, setRecipeData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Edit mode state and edit fields
   const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
+  const [editedRecipe, setEditedRecipe] = useState("");
+  const [editedHowToCook, setEditedHowToCook] = useState("");
+  const [editedMood, setEditedMood] = useState("");
+  const [editedImage, setEditedImage] = useState("");
 
-  // Edit form states
-  const [editedName, setEditedName] = useState('');
-  const [editedDescription, setEditedDescription] = useState('');
-  const [editedRecipe, setEditedRecipe] = useState('');
-  const [editedHowToCook, setEditedHowToCook] = useState('');
-  const [editedMood, setEditedMood] = useState('');
-  const [editedImage, setEditedImage] = useState('');
+  // Additional state: Favorite flag
+  const [isFavorite, setIsFavorite] = useState(false);
 
-  // For mood selection modal in edit mode
+  // Modal states for mood selection and remove alert
   const [editMoodModalVisible, setEditMoodModalVisible] = useState(false);
+  const [showRemoveAlert, setShowRemoveAlert] = useState(false);
 
   // Define available moods
   const moods = [
-    { label: 'Happy', image: require('../assets/images/happy.png') },
-    { label: 'Sad', image: require('../assets/images/sad.png') },
-    { label: 'Hungry', image: require('../assets/images/hungry.png') },
-    { label: 'Cool', image: require('../assets/images/cool.png') },
-    { label: 'Stressed', image: require('../assets/images/stressed.png') }
+    { label: "Happy", image: require("../assets/images/happy.png") },
+    { label: "Sad", image: require("../assets/images/sad.png") },
+    { label: "Hungry", image: require("../assets/images/hungry.png") },
+    { label: "Cool", image: require("../assets/images/cool.png") },
+    { label: "Stressed", image: require("../assets/images/stressed.png") },
   ];
 
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
         const rec = await database.getRecipeById(id);
-        setRecipeData(rec);
-        // Initialize edit states
-        setEditedName(rec.name);
-        setEditedDescription(rec.description);
-        setEditedRecipe(rec.recipe);
-        setEditedHowToCook(rec.howToCook);
-        setEditedMood(rec.mood);
-        setEditedImage(rec.image);
+        if (rec) {
+          setRecipeData(rec);
+          // Initialize edit fields from fetched recipe
+          setEditedName(rec.name);
+          setEditedDescription(rec.description);
+          setEditedRecipe(rec.recipe);
+          setEditedHowToCook(rec.howToCook);
+          setEditedMood(rec.mood);
+          setEditedImage(rec.image);
+          setIsFavorite(rec.favorite || false);
+        } else {
+          setRecipeData(null);
+        }
       } catch (error) {
-        console.error('Error fetching recipe:', error);
+        console.error("Error fetching recipe:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchRecipe();
   }, [id]);
 
-  // Image picker function using MediaTypeOptions.Images
+  // Image picker function
   const pickImage = async (source) => {
     let result;
-    if (source === 'camera') {
+    if (source === "camera") {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Camera permission is required!');
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Camera permission is required!");
         return;
       }
       result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 1
+        quality: 1,
       });
     } else {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Gallery permission is required!');
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Gallery permission is required!");
         return;
       }
       result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 1
+        quality: 1,
       });
     }
-    console.log("Image picker result:", result);
     if (!result.canceled) {
       setEditedImage(result.assets[0].uri);
     }
@@ -94,7 +108,7 @@ const RecipeDetail = () => {
   // Helper: render bullet list for Recipe (ingredients)
   const renderBulletList = (text) => {
     if (!text) return null;
-    return text.split('\n').map((line, index) => {
+    return text.split("\n").map((line, index) => {
       if (!line.trim()) return null;
       return (
         <View key={index} style={styles.bulletItem}>
@@ -107,11 +121,13 @@ const RecipeDetail = () => {
   // Helper: render numbered list for How to Cook
   const renderNumberedList = (text) => {
     if (!text) return null;
-    return text.split('\n').map((line, index) => {
+    return text.split("\n").map((line, index) => {
       if (!line.trim()) return null;
       return (
         <View key={index} style={styles.numberedItem}>
-          <Text style={styles.numberedText}>{index + 1}. {line.trim()}</Text>
+          <Text style={styles.numberedText}>
+            {index + 1}. {line.trim()}
+          </Text>
         </View>
       );
     });
@@ -120,169 +136,100 @@ const RecipeDetail = () => {
   // Helper: get mood image based on label
   const getMoodImage = (mood) => {
     switch (mood) {
-      case 'Happy':
-        return require('../assets/images/happy.png');
-      case 'Sad':
-        return require('../assets/images/sad.png');
-      case 'Hungry':
-        return require('../assets/images/hungry.png');
-      case 'Cool':
-        return require('../assets/images/cool.png');
-      case 'Stressed':
-        return require('../assets/images/stressed.png');
+      case "Happy":
+        return require("../assets/images/happy.png");
+      case "Sad":
+        return require("../assets/images/sad.png");
+      case "Hungry":
+        return require("../assets/images/hungry.png");
+      case "Cool":
+        return require("../assets/images/cool.png");
+      case "Stressed":
+        return require("../assets/images/stressed.png");
       default:
         return null;
     }
   };
 
-  // Handle Save changes with confirmation
-  const handleSave = () => {
-    if (Platform.OS === 'web') {
-      if (window.confirm("Are you sure you want to save changes?")) {
-        const updatedRecipe = {
-          ...recipeData,
-          name: editedName,
-          description: editedDescription,
-          recipe: editedRecipe,
-          howToCook: editedHowToCook,
-          mood: editedMood,
-          image: editedImage
-        };
-        database.updateRecipe(updatedRecipe)
-          .then(() => {
-            setRecipeData(updatedRecipe);
-            setIsEditing(false);
-            window.alert("Recipe updated successfully");
-          })
-          .catch(() => {
-            window.alert("Failed to update recipe");
-          });
-      }
-      return;
-    }
-    Alert.alert(
-      "Confirm Save",
-      "Are you sure you want to save changes?",
-      [
-        {
-          text: "Cancel",
-          onPress: () => {
-            Alert.alert(
-              "Discard Changes?",
-              "Do you want to keep editing or discard your changes?",
-              [
-                { text: "Keep Editing", onPress: () => {} },
-                { 
-                  text: "Discard", 
-                  onPress: () => {
-                    // Revert changes and exit edit mode
-                    setEditedName(recipeData.name);
-                    setEditedDescription(recipeData.description);
-                    setEditedRecipe(recipeData.recipe);
-                    setEditedHowToCook(recipeData.howToCook);
-                    setEditedMood(recipeData.mood);
-                    setEditedImage(recipeData.image);
-                    setIsEditing(false);
-                  },
-                  style: "destructive" 
-                }
-              ]
-            );
-          },
-          style: "cancel"
-        },
-        {
-          text: "Confirm",
-          onPress: async () => {
-            const updatedRecipe = {
-              ...recipeData,
-              name: editedName,
-              description: editedDescription,
-              recipe: editedRecipe,
-              howToCook: editedHowToCook,
-              mood: editedMood,
-              image: editedImage
-            };
-            try {
-              await database.updateRecipe(updatedRecipe);
-              setRecipeData(updatedRecipe);
-              setIsEditing(false);
-              Alert.alert("Success", "Recipe updated successfully");
-            } catch (error) {
-              Alert.alert("Error", "Failed to update recipe");
-            }
-          }
-        }
-      ]
-    );
+  // Format date values
+  const formatDate = (dateValue) => {
+    if (!dateValue) return "";
+    const d = new Date(dateValue);
+    return d.toLocaleDateString();
   };
 
-  // Handle Cancel editing with confirmation
-  const handleCancel = () => {
-    if (Platform.OS === 'web') {
-      if (window.confirm("Do you want to discard your changes?")) {
-        setEditedName(recipeData.name);
-        setEditedDescription(recipeData.description);
-        setEditedRecipe(recipeData.recipe);
-        setEditedHowToCook(recipeData.howToCook);
-        setEditedMood(recipeData.mood);
-        setEditedImage(recipeData.image);
-        setIsEditing(false);
-      }
-      return;
+  // Toggle favorite state (without updating lastEdited)
+  const toggleFavorite = async () => {
+    const newFavorite = !isFavorite;
+    setIsFavorite(newFavorite);
+    const updatedRecipe = {
+      ...recipeData,
+      favorite: newFavorite,
+      // Do not update lastEdited on favorite toggle
+    };
+    setRecipeData(updatedRecipe);
+    try {
+      await database.updateRecipe(updatedRecipe);
+    } catch (error) {
+      Alert.alert("Error", "Failed to update favorite status");
     }
-    Alert.alert(
-      "Cancel Editing",
-      "Do you want to keep editing or discard your changes?",
-      [
-        { text: "Keep Editing", onPress: () => {} },
-        { 
-          text: "Discard", 
-          onPress: () => {
-            setEditedName(recipeData.name);
-            setEditedDescription(recipeData.description);
-            setEditedRecipe(recipeData.recipe);
-            setEditedHowToCook(recipeData.howToCook);
-            setEditedMood(recipeData.mood);
-            setEditedImage(recipeData.image);
-            setIsEditing(false);
-          },
-          style: "destructive" 
-        }
-      ]
-    );
   };
 
-  if (!recipeData) {
-    return (
-      <View style={styles.container}>
-        <Text>Loading Recipe...</Text>
-      </View>
-    );
-  }
+  // Callbacks passed to EditRecipeForm
+  const handleCancelEditing = () => {
+    setEditedName(recipeData.name);
+    setEditedDescription(recipeData.description);
+    setEditedRecipe(recipeData.recipe);
+    setEditedHowToCook(recipeData.howToCook);
+    setEditedMood(recipeData.mood);
+    setEditedImage(recipeData.image);
+    setIsEditing(false);
+  };
 
-  // Render header: if editing, show Cancel and Save buttons; else show logo and title.
+  const handleSaveEditing = async () => {
+    const updatedRecipe = {
+      ...recipeData,
+      name: editedName,
+      description: editedDescription,
+      recipe: editedRecipe,
+      howToCook: editedHowToCook,
+      mood: editedMood,
+      image: editedImage,
+      lastEdited: new Date().toISOString(),
+    };
+    try {
+      await database.updateRecipe(updatedRecipe);
+      setRecipeData(updatedRecipe);
+      setIsEditing(false);
+      Alert.alert("Success", "Recipe updated successfully");
+    } catch (error) {
+      Alert.alert("Error", "Failed to update recipe");
+    }
+  };
+
+  // Render header (for view mode or edit mode)
   const renderHeader = () => {
     if (isEditing) {
       return (
         <View style={styles.header}>
-          <TouchableOpacity style={styles.editHeaderButton} onPress={handleCancel}>
-            <Text style={styles.editHeaderButtonText}>Cancel</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Recipe</Text>
-          <TouchableOpacity style={styles.editHeaderButton} onPress={handleSave}>
-            <Text style={styles.editHeaderButtonText}>Save</Text>
-          </TouchableOpacity>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require("../assets/images/Logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.headerTitle}>Edit Recipe</Text>
+          </View>
         </View>
       );
     }
     return (
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          <Image 
-            source={require('../assets/images/Logo.png')} 
-            style={styles.logo} 
-            resizeMode="contain" 
+          <Image
+            source={require("../assets/images/Logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
           />
           <Text style={styles.headerTitle}>FoodBuddy</Text>
         </View>
@@ -290,108 +237,50 @@ const RecipeDetail = () => {
     );
   };
 
-  // Render content: if editing, show input fields with image picker and mood selector modal; else show formatted details.
+  // Render content: if editing, show EditRecipeForm; else show recipe details.
   const renderContent = () => {
     if (isEditing) {
       return (
-        <ScrollView style={styles.contentContainer}>
-          {/* Editable Image Section */}
-          <View style={styles.imageEditContainer}>
-            <Image source={{ uri: editedImage }} style={styles.recipeImage} />
-            <View style={styles.imageEditButtons}>
-              <TouchableOpacity style={styles.imageEditButton} onPress={() => pickImage('camera')}>
-                <Text style={styles.imageEditButtonText}>Camera</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.imageEditButton} onPress={() => pickImage('gallery')}>
-                <Text style={styles.imageEditButtonText}>Gallery</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          {/* Editable Fields */}
-          <Text style={styles.label}>Recipe Name:</Text>
-          <TextInput style={styles.input} value={editedName} onChangeText={setEditedName} />
-          <Text style={styles.label}>Description:</Text>
-          <TextInput 
-            style={[styles.input, { height: 60 }]} 
-            value={editedDescription} 
-            onChangeText={setEditedDescription} 
-            multiline 
-          />
-          <Text style={styles.label}>Recipe (Ingredients):</Text>
-          <TextInput 
-            style={[styles.input, { height: 100 }]} 
-            value={editedRecipe} 
-            onChangeText={setEditedRecipe} 
-            multiline 
-          />
-          <Text style={styles.label}>How to Cook:</Text>
-          <TextInput 
-            style={[styles.input, { height: 120 }]} 
-            value={editedHowToCook} 
-            onChangeText={setEditedHowToCook} 
-            multiline 
-          />
-          {/* Mood Selector */}
-          <Text style={styles.label}>Mood:</Text>
-          <View style={styles.moodSelectionContainer}>
-            <TouchableOpacity 
-              style={styles.moodSelectButton} 
-              onPress={() => setEditMoodModalVisible(true)}
-            >
-              <Text style={styles.moodSelectText}>{editedMood || "Select Mood"}</Text>
-              <Ionicons name="chevron-down" size={20} color="black" />
-            </TouchableOpacity>
-          </View>
-          {/* Edit Mood Modal */}
-          <Modal
-            visible={editMoodModalVisible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setEditMoodModalVisible(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContainer}>
-                <Text style={styles.modalTitle}>Select Mood</Text>
-                <View style={styles.moodsContainer}>
-                  {moods.map((m) => (
-                    <TouchableOpacity
-                      key={m.label}
-                      style={styles.moodOption}
-                      onPress={() => {
-                        setEditedMood(m.label);
-                        setEditMoodModalVisible(false);
-                      }}
-                    >
-                      <Image source={m.image} style={styles.moodImage} />
-                      <Text style={styles.moodLabel}>{m.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <TouchableOpacity 
-                  style={styles.modalCancelButton} 
-                  onPress={() => setEditMoodModalVisible(false)}
-                >
-                  <Text style={styles.modalCancelText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-        </ScrollView>
+        <EditRecipeForm
+          editedImage={editedImage}
+          onPickImage={pickImage}
+          editedName={editedName}
+          setEditedName={setEditedName}
+          editedDescription={editedDescription}
+          setEditedDescription={setEditedDescription}
+          editedRecipe={editedRecipe}
+          setEditedRecipe={setEditedRecipe}
+          editedHowToCook={editedHowToCook}
+          setEditedHowToCook={setEditedHowToCook}
+          editedMood={editedMood}
+          onOpenMoodModal={() => setEditMoodModalVisible(true)}
+          onCancelEditing={handleCancelEditing}
+          onSaveEditing={handleSaveEditing}
+        />
       );
     }
     return (
       <ScrollView style={styles.contentContainer}>
         <Image source={{ uri: recipeData.image }} style={styles.recipeImage} />
-        <Text style={styles.recipeName}>{recipeData.name}</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.recipeName}>{recipeData.name}</Text>
+          <TouchableOpacity onPress={toggleFavorite}>
+            <Ionicons
+              name={isFavorite ? "star" : "star-outline"}
+              size={24}
+              color={isFavorite ? "gold" : "gray"}
+            />
+          </TouchableOpacity>
+        </View>
         <Text style={styles.recipeDescription}>{recipeData.description}</Text>
-        {recipeData.date && (
-          <Text style={styles.recipeDate}>Created on: {recipeData.date}</Text>
-        )}
         {recipeData.mood && (
           <View style={styles.moodContainer}>
             <Text style={styles.moodLabel}>Mood: {recipeData.mood}</Text>
             {getMoodImage(recipeData.mood) && (
-              <Image source={getMoodImage(recipeData.mood)} style={styles.moodImage} />
+              <Image
+                source={getMoodImage(recipeData.mood)}
+                style={styles.moodImage}
+              />
             )}
           </View>
         )}
@@ -403,16 +292,27 @@ const RecipeDetail = () => {
           <Text style={styles.sectionHeader}>How to Cook:</Text>
           {renderNumberedList(recipeData.howToCook)}
         </View>
+        {/* Moved the date info to the bottom */}
+        <View style={styles.dateContainer}>
+          {recipeData.date && (
+            <Text style={styles.recipeDate}>
+              Created on: {formatDate(recipeData.date)}
+            </Text>
+          )}
+          {recipeData.lastEdited && (
+            <Text style={styles.recipeDate}>
+              Updated On: {formatDate(recipeData.lastEdited)}
+            </Text>
+          )}
+        </View>
       </ScrollView>
     );
   };
 
-  return (
-    <View style={styles.container}>
-      {renderHeader()}
-      {renderContent()}
-      {/* Only show bottom tab bar in view mode */}
-      {!isEditing && (
+  // Render bottom tab bar for Back, Edit, Remove
+  const renderBottomBar = () => {
+    if (!isEditing) {
+      return (
         <View style={styles.bottomTabBar}>
           <TouchableOpacity style={styles.tabItem} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="black" />
@@ -422,22 +322,67 @@ const RecipeDetail = () => {
             <Ionicons name="create" size={24} color="black" />
             <Text style={styles.tabText}>Edit</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.tabItem} 
-            onPress={async () => {
-              try {
-                await database.deleteRecipe(recipeData.id);
-                router.push('/');
-              } catch (error) {
-                console.error('Error deleting recipe:', error);
-              }
-            }}
+          <TouchableOpacity
+            style={styles.tabItem}
+            onPress={() => setShowRemoveAlert(true)}
           >
             <Ionicons name="trash" size={24} color="black" />
             <Text style={styles.tabText}>Remove</Text>
           </TouchableOpacity>
         </View>
-      )}
+      );
+    }
+    return null;
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading Recipe...</Text>
+      </View>
+    );
+  }
+  if (!recipeData) {
+    return (
+      <View style={styles.container}>
+        <Text>Recipe not found.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {renderHeader()}
+      {renderContent()}
+      {renderBottomBar()}
+      <EditMoodModal
+        visible={editMoodModalVisible}
+        moods={moods}
+        onSelect={(mood) => {
+          setEditedMood(mood);
+          setEditMoodModalVisible(false);
+        }}
+        onCancel={() => setEditMoodModalVisible(false)}
+      />
+      <RemoveAlert
+        visible={showRemoveAlert}
+        onCancel={() => setShowRemoveAlert(false)}
+        onConfirm={async () => {
+          try {
+            const updatedRecipe = {
+              ...recipeData,
+              hidden: true,
+              lastEdited: new Date().toISOString(),
+            };
+            await database.updateRecipe(updatedRecipe);
+            setRecipeData(updatedRecipe);
+            setShowRemoveAlert(false);
+            router.push("/");
+          } catch (error) {
+            console.error("Error updating recipe to hidden:", error);
+          }
+        }}
+      />
     </View>
   );
 };
@@ -447,229 +392,126 @@ export default RecipeDetail;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5'
+    backgroundColor: "#F5F5F5",
   },
   /* Header Styles */
   header: {
-    backgroundColor: '#F8D64E',
+    backgroundColor: "#F8D64E",
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    boxShadow: "0px 2px 4px rgba(0,0,0,0.3)",
+    zIndex: 10,
   },
   logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center'
+    flexDirection: "row",
+    alignItems: "center",
   },
   logo: {
     width: 50,
     height: 50,
-    marginRight: 8
+    marginRight: 8,
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold'
-  },
-  editHeaderButton: {
-    backgroundColor: '#FFF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3
-  },
-  editHeaderButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'blue'
+    fontWeight: "bold",
   },
   /* Content Styles */
   contentContainer: {
     flex: 1,
-    paddingHorizontal: 16
+    paddingHorizontal: 16,
   },
   recipeImage: {
-    width: '100%',
+    width: "100%",
     height: 200,
     borderRadius: 10,
-    marginVertical: 10
+    marginVertical: 10,
+  },
+  titleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
   },
   recipeName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8
+    fontWeight: "bold",
   },
   recipeDescription: {
     fontSize: 16,
-    color: '#555',
-    marginBottom: 8
-  },
-  recipeDate: {
-    fontSize: 14,
-    color: '#888',
-    marginBottom: 12
+    color: "#555",
+    marginBottom: 8,
+    textAlign: "justify",
   },
   moodContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
   },
   moodLabel: {
     fontSize: 16,
-    marginRight: 8
+    marginRight: 8,
   },
   moodImage: {
     width: 30,
-    height: 30
+    height: 30,
   },
   section: {
-    marginBottom: 20
+    marginBottom: 20,
   },
   sectionHeader: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10
+    fontWeight: "bold",
+    marginBottom: 10,
   },
   bulletItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 5
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 5,
   },
   bulletText: {
     fontSize: 16,
-    color: '#555',
-    marginLeft: 10
+    color: "#555",
+    marginLeft: 10,
   },
   numberedItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 5
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 5,
   },
   numberedText: {
     fontSize: 16,
-    color: '#555',
-    marginLeft: 10
+    color: "#555",
+    marginLeft: 10,
   },
-  /* Bottom Tab Bar */
+  dateContainer: {
+    marginTop: 20,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderColor: "#ccc",
+    alignItems: "center",
+  },
+  recipeDate: {
+    fontSize: 14,
+    color: "#888",
+  },
+  /* Bottom Tab Bar for RecipeDetail */
   bottomTabBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#F8D64E',
-    paddingVertical: 8
+    flexDirection: "row",
+    justifyContent: "space-around",
+    backgroundColor: "#F8D64E",
+    paddingVertical: 8,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    boxShadow: "0px 2px 4px rgba(0,0,0,0.3)",
   },
   tabItem: {
-    alignItems: 'center'
+    alignItems: "center",
   },
   tabText: {
     fontSize: 12,
-    marginTop: 2
+    marginTop: 2,
   },
-  /* Edit Form Styles */
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 12
-  },
-  input: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    marginTop: 4,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2
-  },
-  /* Image Edit Styles */
-  imageEditContainer: {
-    alignItems: 'center',
-    marginBottom: 16
-  },
-  imageEditButtons: {
-    flexDirection: 'row',
-    marginTop: 8
-  },
-  imageEditButton: {
-    backgroundColor: '#F8D64E',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginHorizontal: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3
-  },
-  imageEditButtonText: {
-    color: '#000',
-    fontWeight: 'bold'
-  },
-  /* Mood Selection Styles in Edit Mode */
-  moodSelectionContainer: {
-    marginBottom: 16
-  },
-  moodSelectButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 10,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2
-  },
-  moodSelectText: {
-    flex: 1,
-    fontSize: 16
-  },
-  /* Modal Styles for Mood Selection */
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  modalContainer: {
-    width: '80%',
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center'
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20
-  },
-  moodsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around'
-  },
-  moodOption: {
-    alignItems: 'center',
-    margin: 10
-  },
-  modalCancelButton: {
-    marginTop: 20,
-    backgroundColor: '#F8D64E',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20
-  },
-  modalCancelText: {
-    fontSize: 16,
-    fontWeight: 'bold'
-  }
 });

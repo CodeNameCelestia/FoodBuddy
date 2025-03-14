@@ -1,11 +1,32 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert, ScrollView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Picker } from '@react-native-picker/picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import database from '../database/database';
+import EditMoodModal from '../components/EditMoodModal';
+import CancelAlert from '../components/CancelAlert';
+import BottomNavbar from '../components/BottomNavbar';
 
-const moods = ['Happy', 'Sad', 'Hungry', 'Cool', 'Stressed'];
+const moods = [
+  { label: 'Happy', image: require('../assets/images/happy.png') },
+  { label: 'Sad', image: require('../assets/images/sad.png') },
+  { label: 'Hungry', image: require('../assets/images/hungry.png') },
+  { label: 'Cool', image: require('../assets/images/cool.png') },
+  { label: 'Stressed', image: require('../assets/images/stressed.png') },
+];
+
+const HEADER_HEIGHT = 70;
 
 const CreateRecipe = () => {
   const router = useRouter();
@@ -13,16 +34,17 @@ const CreateRecipe = () => {
   const [description, setDescription] = useState('');
   const [recipeContent, setRecipeContent] = useState('');
   const [howToCook, setHowToCook] = useState('');
-  const [mood, setMood] = useState(moods[0]);
+  const [mood, setMood] = useState(moods[0].label);
   const [image, setImage] = useState(null);
+  const [moodModalVisible, setMoodModalVisible] = useState(false);
+  const [cancelAlertVisible, setCancelAlertVisible] = useState(false);
 
   const pickImage = async (source) => {
     let result;
-    // Use fallback: on web or if ImagePicker.MediaType is undefined, use MediaTypeOptions.Images
-    const mediaType = (Platform.OS === 'web' || !ImagePicker.MediaType)
-      ? ImagePicker.MediaTypeOptions.Images
-      : ImagePicker.MediaType.Images;
-
+    const mediaType =
+      Platform.OS === 'web'
+        ? ImagePicker.MediaTypeOptions.Images
+        : ImagePicker.MediaType.Images;
     if (source === 'camera') {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
@@ -31,7 +53,7 @@ const CreateRecipe = () => {
       }
       result = await ImagePicker.launchCameraAsync({
         mediaTypes: mediaType,
-        quality: 1
+        quality: 1,
       });
     } else {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -41,12 +63,23 @@ const CreateRecipe = () => {
       }
       result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: mediaType,
-        quality: 1
+        quality: 1,
       });
     }
-    // Use the newer API response format (canceled and assets array)
     if (!result.canceled) {
       setImage(result.assets[0].uri);
+    }
+  };
+
+  const isFormDirty = () => {
+    return name || description || recipeContent || howToCook || image;
+  };
+
+  const handleCancel = () => {
+    if (isFormDirty()) {
+      setCancelAlertVisible(true);
+    } else {
+      router.push('/');
     }
   };
 
@@ -61,73 +94,148 @@ const CreateRecipe = () => {
       recipe: recipeContent,
       howToCook,
       mood,
-      image
+      image,
     };
     await database.addRecipe(newRecipe);
     Alert.alert('Success', 'Recipe added successfully!');
     router.push('/');
   };
 
+  const selectedMoodObj = moods.find((m) => m.label === mood);
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Create New Recipe</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Name of Recipe"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Description"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-      />
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Recipe"
-        value={recipeContent}
-        onChangeText={setRecipeContent}
-        multiline
-      />
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="How to Cook"
-        value={howToCook}
-        onChangeText={setHowToCook}
-        multiline
-      />
-      <Text style={styles.label}>Select Mood:</Text>
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={mood}
-          style={styles.picker}
-          onValueChange={(itemValue) => setMood(itemValue)}>
-          {moods.map((m) => (
-            <Picker.Item key={m} label={m} value={m} />
-          ))}
-        </Picker>
+    <>
+      {/* Fixed Header */}
+      <View style={styles.fixedHeader}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleCancel}>
+            <Ionicons name="arrow-back" size={24} color="black" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Image
+              source={require('../assets/images/Logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.headerTitle}>Create Recipe</Text>
+          </View>
+        </View>
       </View>
-      <Text style={styles.label}>Select Image:</Text>
-      <View style={styles.imageButtonsContainer}>
-        <TouchableOpacity style={styles.imageButton} onPress={() => pickImage('camera')}>
-          <Text style={styles.imageButtonText}>Camera</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.imageButton} onPress={() => pickImage('gallery')}>
-          <Text style={styles.imageButtonText}>Gallery</Text>
-        </TouchableOpacity>
-      </View>
-      {image && <Image source={{ uri: image }} style={styles.previewImage} />}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Save Recipe</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.cancelButton} onPress={() => router.push('/')}>
-          <Text style={styles.buttonText}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+
+      {/* Scrollable Form Content */}
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingTop: HEADER_HEIGHT + 20, paddingBottom: 0 }]}
+      >
+        <Text style={styles.formTitle}>Recipe Details</Text>
+        <View style={styles.form}>
+          <Text style={styles.fieldTitle}>Recipe Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter recipe name"
+            placeholderTextColor="#888"
+            value={name}
+            onChangeText={setName}
+          />
+
+          <Text style={styles.fieldTitle}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Enter a short description"
+            placeholderTextColor="#888"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+          />
+
+          <Text style={styles.fieldTitle}>Ingredients</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="List ingredients, each on a new line"
+            placeholderTextColor="#888"
+            value={recipeContent}
+            onChangeText={setRecipeContent}
+            multiline
+          />
+
+          <Text style={styles.fieldTitle}>How to Cook</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Step-by-step instructions"
+            placeholderTextColor="#888"
+            value={howToCook}
+            onChangeText={setHowToCook}
+            multiline
+          />
+
+          <Text style={styles.fieldTitle}>Select Mood</Text>
+          <TouchableOpacity
+            style={styles.moodButton}
+            onPress={() => setMoodModalVisible(true)}
+          >
+            {selectedMoodObj && (
+              <Image source={selectedMoodObj.image} style={styles.moodImage} />
+            )}
+            <Text style={styles.moodButtonText}>{mood}</Text>
+            <Ionicons name="chevron-down" size={20} color="black" />
+          </TouchableOpacity>
+          <EditMoodModal
+            visible={moodModalVisible}
+            moods={moods}
+            onSelect={(selectedMood) => {
+              setMood(selectedMood);
+              setMoodModalVisible(false);
+            }}
+            onCancel={() => setMoodModalVisible(false)}
+          />
+
+          <Text style={styles.fieldTitle}>Select Image</Text>
+          <View style={styles.imageButtonsContainer}>
+            <TouchableOpacity
+              style={styles.imageButton}
+              onPress={() => pickImage('camera')}
+            >
+              <Ionicons name="camera" size={20} color="#fff" />
+              <Text style={styles.imageButtonText}>Camera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.imageButton}
+              onPress={() => pickImage('gallery')}
+            >
+              <Ionicons name="images" size={20} color="#fff" />
+              <Text style={styles.imageButtonText}>Gallery</Text>
+            </TouchableOpacity>
+          </View>
+          {image ? (
+            <Image source={{ uri: image }} style={styles.previewImage} />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Ionicons name="image" size={50} color="#ccc" />
+              <Text style={styles.imagePlaceholderText}>No Image Selected</Text>
+            </View>
+          )}
+
+          {/* Inline Save and Cancel Buttons */}
+          <View style={styles.formButtonsContainer}>
+            <TouchableOpacity style={styles.saveButtonInline} onPress={handleSubmit}>
+              <Text style={styles.formButtonText}>Save Recipe</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelButtonInline} onPress={handleCancel}>
+              <Text style={styles.formButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+
+      <BottomNavbar />
+      <CancelAlert
+        visible={cancelAlertVisible}
+        onKeepEditing={() => setCancelAlertVisible(false)}
+        onDiscard={() => {
+          setCancelAlertVisible(false);
+          router.push('/');
+        }}
+      />
+    </>
   );
 };
 
@@ -135,84 +243,166 @@ export default CreateRecipe;
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
+    paddingBottom: 0, // Removed extra bottom padding
+  },
+  /* Fixed Header */
+  fixedHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
   },
   header: {
+    backgroundColor: '#F8D64E',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    boxShadow: '0px 2px 4px rgba(0,0,0,0.3)',
+    zIndex: 10,
+  },
+  backButton: {
+    position: 'absolute',
+    left: 16,
+    top: 25,
+    zIndex: 21,
+  },
+  headerContent: {
+    flex: 1,
+    flexDirection: 'row', // Icon and title side by side
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    marginRight: 8,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  /* Form Title */
+  formTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center'
+    textAlign: 'center',
+    marginVertical: 16,
+    color: '#F8D64E',
+  },
+  /* Form Section */
+  form: {
+    paddingHorizontal: 16,
+  },
+  fieldTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+    color: '#333',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 12,
     marginBottom: 12,
-    borderRadius: 4
+    borderRadius: 4,
+    backgroundColor: '#fff',
+    color: '#000',
   },
   textArea: {
     height: 100,
-    textAlignVertical: 'top'
+    textAlignVertical: 'top',
   },
   label: {
     fontSize: 16,
-    marginBottom: 8
+    marginBottom: 8,
   },
-  pickerContainer: {
+  moodButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#ccc',
+    padding: 12,
     borderRadius: 4,
-    marginBottom: 12
+    marginBottom: 12,
+    backgroundColor: '#fff',
   },
-  picker: {
-    height: 50,
-    width: '100%'
+  moodButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  moodImage: {
+    width: 30,
+    height: 30,
+    marginRight: 8,
   },
   imageButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12
+    justifyContent: 'space-around',
+    marginBottom: 12,
   },
   imageButton: {
-    backgroundColor: '#007AFF',
-    padding: 10,
-    borderRadius: 4,
-    flex: 1,
-    marginHorizontal: 5,
-    alignItems: 'center'
+    backgroundColor: '#F8D64E',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    boxShadow: '0px 2px 4px rgba(0,0,0,0.3)',
   },
   imageButtonText: {
-    color: '#fff'
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 6,
   },
   previewImage: {
     width: '100%',
     height: 200,
     marginBottom: 12,
-    borderRadius: 4
+    borderRadius: 4,
   },
-  buttonContainer: {
+  imagePlaceholder: {
+    width: '100%',
+    height: 200,
+    marginBottom: 12,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePlaceholderText: {
+    color: '#ccc',
+    marginTop: 8,
+  },
+  /* Inline Form Buttons */
+  formButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-around',
+    marginBottom: 20,
   },
-  submitButton: {
-    backgroundColor: 'green',
-    padding: 12,
-    borderRadius: 4,
-    flex: 1,
-    marginRight: 5,
-    alignItems: 'center'
+  saveButtonInline: {
+    backgroundColor: '#FFA500',
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 30,
+    boxShadow: '0px 2px 4px rgba(0,0,0,0.3)',
   },
-  cancelButton: {
-    backgroundColor: 'red',
-    padding: 12,
-    borderRadius: 4,
-    flex: 1,
-    marginLeft: 5,
-    alignItems: 'center'
+  cancelButtonInline: {
+    backgroundColor: '#FF4C4C',
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 30,
+    boxShadow: '0px 2px 4px rgba(0,0,0,0.3)',
   },
-  buttonText: {
+  formButtonText: {
     color: '#fff',
-    fontWeight: 'bold'
-  }
+    fontWeight: 'bold',
+  },
 });

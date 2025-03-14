@@ -339,7 +339,8 @@ const styles = StyleSheet.create({
   imageButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 12,
+    marginBottom: 15,
+    marginTop: 12,
   },
   imageButton: {
     backgroundColor: '#F8D64E',
@@ -357,7 +358,7 @@ const styles = StyleSheet.create({
   },
   previewImage: {
     width: '100%',
-    height: 200,
+    height: 250,
     marginBottom: 12,
     borderRadius: 4,
   },

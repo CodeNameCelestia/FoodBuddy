@@ -26,19 +26,19 @@ const SplashScreen = () => {
         Animated.parallel([
           Animated.timing(opacity, {
             toValue: 0,
-            duration: 300,
+            duration: 500,
             useNativeDriver: Platform.OS !== 'web',
           }),
           Animated.timing(scale, {
-            toValue: 0.9,
-            duration: 1000,
+            toValue: 0.8,
+            duration: 500,
             useNativeDriver: Platform.OS !== 'web',
           }),
         ]).start(() => {
           // After exit animation, navigate to Home
           router.replace('/');
         });
-      }, 1500);
+      }, 2000);
     });
   }, [opacity, scale, router]);
 

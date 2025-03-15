@@ -103,7 +103,7 @@ const SplashScreen = () => {
         <Text style={styles.appName}>FoodBuddy</Text>
         <Text style={styles.tagline}>Your Personal Recipe Management App</Text>
         <Text style={styles.creatortxt}>Created by:</Text>
-        <Text style={styles.creator}>Alejandro A. Cayasa</Text>
+        <Text style={styles.creator}>Code_Celestia</Text>
       </Animated.View>
     </LinearGradient>
   );

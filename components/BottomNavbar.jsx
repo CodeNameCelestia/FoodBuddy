@@ -16,10 +16,11 @@ const BottomNavbar = ({ onMoodPress }) => {
 
   // Animated value for the active tab (used for scale and translateY).
   const activeTabAnim = useRef(new Animated.Value(1)).current;
-  // Animated value for the mood button; if on Home then it should rise.
-  const moodAnim = useRef(new Animated.Value(pathname === "/" ? 1 : 0)).current;
+  // Animated value for the mood bubble.
+  // We'll animate this to create a "pop" effect.
+  const moodAnim = useRef(new Animated.Value(0)).current;
 
-  // When the route (and thus active tab) changes, run an animation on activeTabAnim.
+  // When the route changes, animate the active tab.
   useEffect(() => {
     Animated.sequence([
       Animated.timing(activeTabAnim, {
@@ -40,14 +41,24 @@ const BottomNavbar = ({ onMoodPress }) => {
     ]).start();
   }, [pathname]);
 
-  // Animate the mood button. When on Home, rise it up; otherwise, lower it.
+  // Animate the mood bubble when on home.
   useEffect(() => {
     if (pathname === "/") {
-      Animated.timing(moodAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      Animated.sequence([
+        // Start from base (0) then animate upward past target (overshoot)
+        Animated.timing(moodAnim, {
+          toValue: 0.5,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        // Spring to the final value (settle)
+        Animated.spring(moodAnim, {
+          toValue: 1,
+          friction: 3,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
       Animated.timing(moodAnim, {
         toValue: 0,
@@ -102,14 +113,14 @@ const BottomNavbar = ({ onMoodPress }) => {
                     {
                       transform: [
                         {
-                          // Translate the mood bubble up when on Home.
+                          // Interpolate the moodAnim to produce a pop effect.
                           translateY: moodAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0, -15],
+                            inputRange: [0, 0.5, 1],
+                            outputRange: [0, -20, -15],
                           }),
                         },
                         {
-                          // Apply the active tab scale animation if this tab is active.
+                          // Scale for active tab animation.
                           scale: active ? activeTabAnim : 1,
                         },
                       ],
@@ -138,7 +149,7 @@ const BottomNavbar = ({ onMoodPress }) => {
                       transform: [
                         {
                           translateY: activeTabAnim.interpolate({
-                            inputRange: [0.8, 1, 1.2], // Must be ascending!
+                            inputRange: [0.8, 1, 1.2],
                             outputRange: [-5, -15, -5],
                           }),
                         },

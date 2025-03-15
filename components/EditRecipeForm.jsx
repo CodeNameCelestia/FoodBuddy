@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
       paddingHorizontal: 12,
       borderRadius: 8,
       marginHorizontal: 6,
-      boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3)'
+      boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3)',
     },
     imageEditButtonText: {
       color: '#000',

@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const RecipeCard = ({ item, onPress }) => {
+const MediumRecipeCard = ({ item, onPress }) => {
   return (
-    <View style={styles.recipeCard}>
+    <View style={styles.cardContainer}>
       <Image source={{ uri: item.image }} style={styles.recipeImage} />
       <View style={styles.recipeContent}>
         <View style={styles.titleRow}>
@@ -12,13 +12,13 @@ const RecipeCard = ({ item, onPress }) => {
           {item.favorite && (
             <Ionicons 
               name="star" 
-              size={16} 
+              size={14} 
               color="gold" 
               style={styles.favoriteIcon} 
             />
           )}
         </View>
-        <Text style={styles.recipeDescription} numberOfLines={2} ellipsizeMode="tail">
+        <Text style={styles.recipeDescription} numberOfLines={1} ellipsizeMode="tail">
           {item.description}
         </Text>
         <TouchableOpacity style={styles.viewButton} onPress={() => onPress(item.id)}>
@@ -29,25 +29,23 @@ const RecipeCard = ({ item, onPress }) => {
   );
 };
 
-export default RecipeCard;
+export default MediumRecipeCard;
 
 const styles = StyleSheet.create({
-  recipeCard: {
+  cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    marginBottom: 16,
+    borderRadius: 12,
+    margin: 8,
     overflow: 'hidden',
-    // For web platforms, use boxShadow; on native, you might use elevation.
     boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
-    width: '85%',
-    alignSelf: 'center',
+    width: '45%', // Two cards per row
   },
   recipeImage: {
     width: '100%',
-    height: 175,
+    height: 120,
   },
   recipeContent: {
-    padding: 10,
+    padding: 8,
   },
   titleRow: {
     flexDirection: 'row',
@@ -56,26 +54,27 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   recipeTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   favoriteIcon: {
-    marginLeft: 8,
+    marginLeft: 4,
   },
   recipeDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'justify',
   },
   viewButton: {
     backgroundColor: '#FFA500',
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 6,
+    borderRadius: 6,
     alignItems: 'center',
   },
   viewButtonText: {
     color: '#FFF',
     fontWeight: 'bold',
+    fontSize: 12,
   },
 });

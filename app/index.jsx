@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+// app/index.jsx
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   View,
   Text,
@@ -7,26 +8,32 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  Platform, // Make sure Platform is imported
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter, usePathname } from 'expo-router';
-import database from '../database/database';
-import MoodModal from '../components/MoodModal';
-import RecipeCard from '../components/RecipeCard';
-import BottomNavbar from '../components/BottomNavbar';
-import NoMoodRecipeAlert from '../components/NoMoodRecipeAlert';
+  Platform,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter, usePathname } from "expo-router";
+import database from "../database/database";
+import MoodModal from "../components/MoodModal";
+import RecipeCard from "../components/RecipeCard";
+import MediumRecipeCard from "../components/MediumRecipeCard";
+import ListRecipeCard from "../components/ListRecipeCard";
+import BottomNavbar from "../components/BottomNavbar";
+import NoMoodRecipeAlert from "../components/alerts/NoMoodRecipeAlert";
+import { LayoutContext } from "../contexts/LayoutContext";
 
 const Home = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [recipes, setRecipes] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [moodModalVisible, setMoodModalVisible] = useState(false);
   const [noMoodAlertVisible, setNoMoodAlertVisible] = useState(false);
-  const [selectedMood, setSelectedMood] = useState('');
+  const [selectedMood, setSelectedMood] = useState("");
   const [scaleValue] = useState(new Animated.Value(0));
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Access the global layout value
+  const { layout } = useContext(LayoutContext);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,7 +42,7 @@ const Home = () => {
         const visibleRecipes = data.filter((recipe) => !recipe.hidden);
         setRecipes(visibleRecipes);
       } catch (error) {
-        console.error('Error fetching recipes:', error);
+        console.error("Error fetching recipes:", error);
       }
     };
     fetchData();
@@ -46,7 +53,7 @@ const Home = () => {
       Animated.spring(scaleValue, {
         toValue: 1,
         friction: 5,
-        useNativeDriver: Platform.OS !== 'web', // Disable native driver on web
+        useNativeDriver: Platform.OS !== "web",
       }).start();
     } else {
       scaleValue.setValue(0);
@@ -56,7 +63,7 @@ const Home = () => {
   const headerScale = scrollY.interpolate({
     inputRange: [-100, 0],
     outputRange: [1.2, 1],
-    extrapolate: 'clamp',
+    extrapolate: "clamp",
   });
 
   const filteredRecipes = recipes.filter((r) =>
@@ -68,11 +75,11 @@ const Home = () => {
   };
 
   const moods = [
-    { label: 'Happy', image: require('../assets/images/happy.png') },
-    { label: 'Sad', image: require('../assets/images/sad.png') },
-    { label: 'Hungry', image: require('../assets/images/hungry.png') },
-    { label: 'Cool', image: require('../assets/images/cool.png') },
-    { label: 'Stressed', image: require('../assets/images/stressed.png') },
+    { label: "Happy", image: require("../assets/images/happy.png") },
+    { label: "Sad", image: require("../assets/images/sad.png") },
+    { label: "Hungry", image: require("../assets/images/hungry.png") },
+    { label: "Cool", image: require("../assets/images/cool.png") },
+    { label: "Stressed", image: require("../assets/images/stressed.png") },
   ];
 
   const handleMoodSelect = async (mood) => {
@@ -82,24 +89,28 @@ const Home = () => {
       const visibleMoodRecipes = moodRecipes.filter((recipe) => !recipe.hidden);
       if (visibleMoodRecipes.length > 0) {
         const randomRecipe =
-          visibleMoodRecipes[Math.floor(Math.random() * visibleMoodRecipes.length)];
+          visibleMoodRecipes[
+            Math.floor(Math.random() * visibleMoodRecipes.length)
+          ];
         router.push(`/recipeDetail?id=${randomRecipe.id}`);
       } else {
         setSelectedMood(mood);
         setNoMoodAlertVisible(true);
       }
     } catch (error) {
-      console.error('Error selecting mood:', error);
+      console.error("Error selecting mood:", error);
     }
   };
 
   return (
     <View style={styles.container}>
       {/* Animated Header */}
-      <Animated.View style={[styles.header, { transform: [{ scale: headerScale }] }]}>
+      <Animated.View
+        style={[styles.header, { transform: [{ scale: headerScale }] }]}
+      >
         <View style={styles.logoContainer}>
           <Image
-            source={require('../assets/images/Logo.png')}
+            source={require("../assets/images/Logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -118,7 +129,7 @@ const Home = () => {
         />
         <TouchableOpacity
           style={styles.addButtonContainer}
-          onPress={() => router.push('/createRecipe')}
+          onPress={() => router.push("/createRecipe")}
         >
           <Ionicons name="add-circle" size={32} color="black" />
         </TouchableOpacity>
@@ -132,20 +143,51 @@ const Home = () => {
         overScrollMode="always"
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: Platform.OS !== 'web' }
+          { useNativeDriver: Platform.OS !== "web" }
         )}
         scrollEventThrottle={16}
       >
-        <Text style={[styles.sectionTitle, { textAlign: 'center' }]}>
+        <Text style={[styles.sectionTitle, { textAlign: "center" }]}>
           Recent Recipes
         </Text>
-        {filteredRecipes.map((item) => (
-          <RecipeCard key={item.id} item={item} onPress={handleViewRecipe} />
-        ))}
+        {layout === "medium" ? (
+          <View style={styles.gridContainer}>
+            {filteredRecipes.map((item) => (
+              <MediumRecipeCard
+                key={item.id}
+                item={item}
+                onPress={handleViewRecipe}
+              />
+            ))}
+          </View>
+        ) : (
+          filteredRecipes.map((item) => {
+            if (layout === "default") {
+              return (
+                <RecipeCard
+                  key={item.id}
+                  item={item}
+                  onPress={handleViewRecipe}
+                />
+              );
+            } else if (layout === "list") {
+              return (
+                <ListRecipeCard
+                  key={item.id}
+                  item={item}
+                  onPress={handleViewRecipe}
+                />
+              );
+            }
+          })
+        )}
       </Animated.ScrollView>
 
       {/* Bottom Navbar with Mood Button visible on Home */}
-      <BottomNavbar showMoodButton={true} onMoodPress={() => setMoodModalVisible(true)} />
+      <BottomNavbar
+        showMoodButton={true}
+        onMoodPress={() => setMoodModalVisible(true)}
+      />
 
       {/* Mood Selection Modal */}
       <MoodModal
@@ -229,5 +271,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginVertical: 16,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between', // or 'center'
+    paddingHorizontal: 8,
   },
 });

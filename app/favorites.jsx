@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+// app/favorites.jsx
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   View,
   Text,
@@ -7,13 +8,16 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  Platform, // <-- Added Platform import here
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import database from '../database/database';
-import RecipeCard from '../components/RecipeCard';
-import BottomNavbar from '../components/BottomNavbar';
+  Platform,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import database from "../database/database";
+import RecipeCard from "../components/RecipeCard";
+import MediumRecipeCard from "../components/MediumRecipeCard";
+import ListRecipeCard from "../components/ListRecipeCard";
+import BottomNavbar from "../components/BottomNavbar";
+import { LayoutContext } from "../contexts/LayoutContext";
 
 const HEADER_HEIGHT = 70;
 
@@ -21,6 +25,7 @@ const Favorites = () => {
   const router = useRouter();
   const [recipes, setRecipes] = useState([]);
   const scrollY = useRef(new Animated.Value(0)).current;
+  const { layout } = useContext(LayoutContext);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,7 +36,7 @@ const Favorites = () => {
         );
         setRecipes(favoriteRecipes);
       } catch (error) {
-        console.error('Error fetching recipes:', error);
+        console.error("Error fetching recipes:", error);
       }
     };
     fetchData();
@@ -40,7 +45,7 @@ const Favorites = () => {
   const headerScale = scrollY.interpolate({
     inputRange: [-100, 0],
     outputRange: [1.2, 1],
-    extrapolate: 'clamp',
+    extrapolate: "clamp",
   });
 
   const handleViewRecipe = (id) => {
@@ -49,13 +54,18 @@ const Favorites = () => {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.header, { transform: [{ scale: headerScale }] }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+      <Animated.View
+        style={[styles.header, { transform: [{ scale: headerScale }] }]}
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <View style={styles.centeredHeader}>
           <Image
-            source={require('../assets/images/Logo.png')}
+            source={require("../assets/images/Logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -70,16 +80,42 @@ const Favorites = () => {
         overScrollMode="always"
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: Platform.OS !== 'web' }
+          { useNativeDriver: Platform.OS !== "web" }
         )}
         scrollEventThrottle={16}
       >
         {recipes.length === 0 ? (
           <Text style={styles.noFavoritesText}>No favorite recipes found.</Text>
+        ) : layout === "medium" ? (
+          <View style={styles.gridContainer}>
+            {recipes.map((item) => (
+              <MediumRecipeCard
+                key={item.id}
+                item={item}
+                onPress={handleViewRecipe}
+              />
+            ))}
+          </View>
         ) : (
-          recipes.map((item) => (
-            <RecipeCard key={item.id} item={item} onPress={handleViewRecipe} />
-          ))
+          recipes.map((item) => {
+            if (layout === "default") {
+              return (
+                <RecipeCard
+                  key={item.id}
+                  item={item}
+                  onPress={handleViewRecipe}
+                />
+              );
+            } else if (layout === "list") {
+              return (
+                <ListRecipeCard
+                  key={item.id}
+                  item={item}
+                  onPress={handleViewRecipe}
+                />
+              );
+            }
+          })
         )}
       </Animated.ScrollView>
 
@@ -93,34 +129,34 @@ export default Favorites;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   header: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     height: HEADER_HEIGHT,
-    backgroundColor: '#F8D64E',
+    backgroundColor: "#F8D64E",
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 12,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    boxShadow: '0px 2px 4px rgba(0,0,0,0.3)',
+    boxShadow: "0px 2px 4px rgba(0,0,0,0.3)",
     zIndex: 10,
   },
   backButton: {
-    position: 'absolute',
+    position: "absolute",
     left: 16,
     top: 25,
     zIndex: 11,
   },
   centeredHeader: {
-    flexDirection: 'row',
+    flexDirection: "row",
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   logo: {
     width: 50,
@@ -129,7 +165,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   scrollContainer: {
     flex: 1,
@@ -137,8 +173,14 @@ const styles = StyleSheet.create({
   },
   noFavoritesText: {
     fontSize: 18,
-    textAlign: 'center',
+    textAlign: "center",
     marginVertical: 20,
-    color: '#888',
+    color: "#888",
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
   },
 });

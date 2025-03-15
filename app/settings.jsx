@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
   Text,
@@ -11,17 +11,24 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import database from '../database/database';
-import RestoreAlert from '../components/RestoreAlert';
-import DeleteAlert from '../components/DeleteAlert';
+import RestoreAlert from '../components/alerts/RestoreAlert';
+import DeleteAlert from '../components/alerts/DeleteAlert';
 import BottomNavbar from '../components/BottomNavbar';
+import RecentlyRemoved from '../components/RecentlyRemoved';
+import LayoutSelection from '../components/LayoutSelection';
+import { LayoutContext } from '../contexts/LayoutContext'; // Import the context
 
 const Settings = () => {
   const router = useRouter();
   const [showRecentlyRemoved, setShowRecentlyRemoved] = useState(false);
+  const [showLayoutSelection, setShowLayoutSelection] = useState(false);
   const [hiddenRecipes, setHiddenRecipes] = useState([]);
   const [restoreAlertVisible, setRestoreAlertVisible] = useState(false);
   const [deleteAlertVisible, setDeleteAlertVisible] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  
+  // Use the global layout state
+  const { layout, setLayout } = useContext(LayoutContext);
 
   // Fetch hidden recipes
   const fetchHiddenRecipes = async () => {
@@ -73,60 +80,14 @@ const Settings = () => {
         >
           <Text style={styles.settingButtonText}>Recently Removed</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={() => setShowLayoutSelection(true)}
+        >
+          <Text style={styles.settingButtonText}>Layout</Text>
+        </TouchableOpacity>
         {/* Additional settings options here */}
       </View>
-    </ScrollView>
-  );
-
-  // Recently removed view
-  const renderRecentlyRemoved = () => (
-    <ScrollView contentContainerStyle={styles.removedContainer}>
-      <Text style={styles.removedTitle}>Recently Removed Recipes</Text>
-      {hiddenRecipes.length === 0 ? (
-        <Text style={styles.noRemovedText}>No hidden recipes.</Text>
-      ) : (
-        hiddenRecipes.map((recipe) => (
-          <View key={recipe.id} style={styles.removedCard}>
-            {recipe.image ? (
-              <Image source={{ uri: recipe.image }} style={styles.removedImage} />
-            ) : (
-              <View style={styles.removedImagePlaceholder}>
-                <Ionicons name="image" size={40} color="#ccc" />
-              </View>
-            )}
-            <View style={styles.removedContent}>
-              <Text style={styles.removedName}>{recipe.name}</Text>
-              <View style={styles.removedButtonsRow}>
-                <TouchableOpacity
-                  style={styles.restoreButton}
-                  onPress={() => {
-                    setSelectedRecipe(recipe);
-                    setRestoreAlertVisible(true);
-                  }}
-                >
-                  <Text style={styles.buttonText}>Restore</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => {
-                    setSelectedRecipe(recipe);
-                    setDeleteAlertVisible(true);
-                  }}
-                >
-                  <Text style={styles.buttonText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        ))
-      )}
-      <TouchableOpacity
-        style={styles.backToSettingsButton}
-        onPress={() => setShowRecentlyRemoved(false)}
-      >
-        <Ionicons name="arrow-back" size={20} color="#fff" />
-        <Text style={styles.backToSettingsText}>Back to Settings</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 
@@ -147,7 +108,24 @@ const Settings = () => {
         </View>
       </View>
       {/* Content */}
-      {showRecentlyRemoved ? renderRecentlyRemoved() : renderMainSettings()}
+      {showLayoutSelection ? (
+        <LayoutSelection 
+          visible={showLayoutSelection}
+          selectedLayout={layout}
+          setSelectedLayout={setLayout}
+          onClose={() => setShowLayoutSelection(false)}
+        />
+      ) : showRecentlyRemoved ? (
+        <RecentlyRemoved 
+          hiddenRecipes={hiddenRecipes}
+          onRestore={() => setRestoreAlertVisible(true)}
+          onDelete={() => setDeleteAlertVisible(true)}
+          onBack={() => setShowRecentlyRemoved(false)}
+          setSelectedRecipe={setSelectedRecipe}
+        />
+      ) : (
+        renderMainSettings()
+      )}
 
       {/* Fixed Bottom Navbar */}
       <View style={styles.navbarContainer}>
@@ -193,7 +171,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    boxShadow: '0px 2px 4px rgba(0,0,0,0.3)',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
     zIndex: 10,
   },
   headerBackButton: {
@@ -220,7 +201,7 @@ const styles = StyleSheet.create({
   /* Main Settings Options */
   settingsContainer: {
     padding: 16,
-    paddingBottom: 100, // Enough space for the navbar
+    paddingBottom: 100,
   },
   settingsOptions: {
     marginTop: 20,
@@ -232,94 +213,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     borderRadius: 30,
     marginVertical: 10,
-    boxShadow: '0px 2px 4px rgba(0,0,0,0.3)',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   settingButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
-  },
-  /* Recently Removed */
-  removedContainer: {
-    padding: 16,
-    paddingBottom: 100, // Enough space for the navbar
-  },
-  removedTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#F8D64E',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  noRemovedText: {
-    fontSize: 18,
-    textAlign: 'center',
-    color: '#888',
-  },
-  removedCard: {
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    marginBottom: 16,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    boxShadow: '0px 2px 3px rgba(0,0,0,0.2)',
-  },
-  removedImage: {
-    width: 100,
-    height: 100,
-  },
-  removedImagePlaceholder: {
-    width: 100,
-    height: 100,
-    backgroundColor: '#eee',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  removedContent: {
-    flex: 1,
-    padding: 10,
-    justifyContent: 'center',
-  },
-  removedName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  removedButtonsRow: {
-    flexDirection: 'row',
-  },
-  restoreButton: {
-    backgroundColor: '#F8D64E',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    marginRight: 10,
-    boxShadow: '0px 2px 3px rgba(0,0,0,0.3)',
-  },
-  deleteButton: {
-    backgroundColor: '#FF4C4C',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    boxShadow: '0px 2px 3px rgba(0,0,0,0.3)',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  backToSettingsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8D64E',
-    padding: 10,
-    borderRadius: 20,
-    alignSelf: 'center',
-    marginTop: 20,
-    boxShadow: '0px 2px 3px rgba(0,0,0,0.3)',
-  },
-  backToSettingsText: {
-    color: '#fff',
-    marginLeft: 6,
     fontWeight: 'bold',
   },
   /* Bottom Navbar Container */

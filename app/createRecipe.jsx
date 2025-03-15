@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import database from '../database/database';
 import EditMoodModal from '../components/EditMoodModal';
-import CancelAlert from '../components/CancelAlert';
+import CancelAlert from '../components/alerts/CancelAlert';
 import BottomNavbar from '../components/BottomNavbar';
 
 const moods = [

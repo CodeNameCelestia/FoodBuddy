@@ -9,8 +9,8 @@ import {
   StyleSheet 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import CancelAlert from './CancelAlert';
-import SaveAlert from './SaveAlert';
+import CancelAlert from './alerts/CancelAlert';
+import SaveAlert from './alerts/SaveAlert';
 
 const EditRecipeForm = ({
   editedImage,

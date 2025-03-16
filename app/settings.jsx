@@ -1,3 +1,4 @@
+// app/settings.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
@@ -16,17 +17,21 @@ import DeleteAlert from '../components/alerts/DeleteAlert';
 import BottomNavbar from '../components/BottomNavbar';
 import RecentlyRemoved from '../components/RecentlyRemoved';
 import LayoutSelection from '../components/LayoutSelection';
-import { LayoutContext } from '../contexts/LayoutContext'; // Import the context
+import { LayoutContext } from '../contexts/LayoutContext';
+import FloatingFeaturesToggleModal from '../components/FloatingFeaturesToggleModal';
+import ChangeEmojiModal from '../components/ChangeEmojiModal';
 
 const Settings = () => {
   const router = useRouter();
   const [showRecentlyRemoved, setShowRecentlyRemoved] = useState(false);
   const [showLayoutSelection, setShowLayoutSelection] = useState(false);
+  const [showToggleModal, setShowToggleModal] = useState(false);
+  const [showChangeEmojiModal, setShowChangeEmojiModal] = useState(false);
   const [hiddenRecipes, setHiddenRecipes] = useState([]);
   const [restoreAlertVisible, setRestoreAlertVisible] = useState(false);
   const [deleteAlertVisible, setDeleteAlertVisible] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
-  
+
   // Use the global layout state
   const { layout, setLayout } = useContext(LayoutContext);
 
@@ -47,7 +52,7 @@ const Settings = () => {
     }
   }, [showRecentlyRemoved]);
 
-  // Restore a hidden recipe
+  // Restore and delete functions remain as before…
   const handleRestore = async (recipe) => {
     const updatedRecipe = { ...recipe, hidden: false };
     try {
@@ -59,7 +64,6 @@ const Settings = () => {
     }
   };
 
-  // Permanently delete a recipe
   const handleDelete = async (recipe) => {
     try {
       await database.deleteRecipe(recipe.id);
@@ -86,7 +90,18 @@ const Settings = () => {
         >
           <Text style={styles.settingButtonText}>Layout</Text>
         </TouchableOpacity>
-        {/* Additional settings options here */}
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={() => setShowToggleModal(true)}
+        >
+          <Text style={styles.settingButtonText}>Toggle Floating & Timer</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={() => setShowChangeEmojiModal(true)}
+        >
+          <Text style={styles.settingButtonText}>Change Emoji</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -118,20 +133,18 @@ const Settings = () => {
       ) : showRecentlyRemoved ? (
         <RecentlyRemoved 
           hiddenRecipes={hiddenRecipes}
-          onRestore={() => setRestoreAlertVisible(true)}
-          onDelete={() => setDeleteAlertVisible(true)}
+          onRestore={() => {}}
+          onDelete={() => {}}
           onBack={() => setShowRecentlyRemoved(false)}
-          setSelectedRecipe={setSelectedRecipe}
+          setSelectedRecipe={() => {}}
         />
       ) : (
         renderMainSettings()
       )}
-
       {/* Fixed Bottom Navbar */}
       <View style={styles.navbarContainer}>
         <BottomNavbar />
       </View>
-
       {/* Alerts */}
       <RestoreAlert
         visible={restoreAlertVisible}
@@ -147,6 +160,23 @@ const Settings = () => {
         onConfirm={() => {
           handleDelete(selectedRecipe);
           setDeleteAlertVisible(false);
+        }}
+      />
+      {/* Toggle Floating & Timer Modal */}
+      <FloatingFeaturesToggleModal
+        visible={showToggleModal}
+        onClose={() => setShowToggleModal(false)}
+        onToggleUpdate={(states) => {
+          console.log('Updated toggles:', states);
+        }}
+      />
+      {/* Change Emoji Modal */}
+      <ChangeEmojiModal
+        visible={showChangeEmojiModal}
+        onClose={() => setShowChangeEmojiModal(false)}
+        onSelect={(folder) => {
+          Alert.alert("Mood Folder Selected", `Selected: ${folder}`);
+          // Optionally update a global state or context so that getMoodImage uses the new folder.
         }}
       />
     </View>

@@ -1,17 +1,21 @@
-// RecipeDetail.jsx
-import React, { useEffect, useState, useRef } from "react";
+// app/recipeDetail.jsx
+import React, { useEffect, useState, useRef, useContext } from "react";
 import { View, Text, StyleSheet, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import database from "../database/database";
-import EditMoodModal from "../components/EditMoodModal";
-import EditRecipeForm from "../components/EditRecipeForm";
-import RemoveAlert from "../components/alerts/RemoveAlert";
+
+// Modular components
 import RecipeDetailHeader from "../components/RecipeDetailHeader";
 import RecipeDetailContent from "../components/RecipeDetailContent";
 import RecipeDetailBottomBar from "../components/RecipeDetailBottomBar";
 import FloatingTimerButton from "../components/FloatingTimerButton";
+import EditMoodModal from "../components/EditMoodModal";
+import EditRecipeForm from "../components/EditRecipeForm";
+import RemoveAlert from "../components/alerts/RemoveAlert";
+import { MoodContext } from "../contexts/MoodContext";
 
 const RecipeDetail = () => {
   const { id } = useLocalSearchParams();
@@ -21,7 +25,7 @@ const RecipeDetail = () => {
   const [recipeData, setRecipeData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Edit mode state and edit fields
+  // Edit mode state and fields
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
@@ -41,15 +45,77 @@ const RecipeDetail = () => {
   const [remainingTime, setRemainingTime] = useState(null);
   const timerRef = useRef(null);
 
-  // Define available moods
+  // Floating features toggles (loaded from AsyncStorage)
+  const [floatingEnabled, setFloatingEnabled] = useState(true);
+  const [timerEnabled, setTimerEnabled] = useState(true);
+
+  // Global Mood Context to get the current mood folder
+  const { moodFolder } = useContext(MoodContext);
+
+  // Build a mood images mapping based on available folders
+  const moodImages = {
+    Anime: {
+      Happy: require("../assets/images/Moods/Anime/happy.png"),
+      Sad: require("../assets/images/Moods/Anime/sad.png"),
+      Hungry: require("../assets/images/Moods/Anime/hungry.png"),
+      Cool: require("../assets/images/Moods/Anime/cool.png"),
+      Stressed: require("../assets/images/Moods/Anime/stressed.png"),
+    },
+    // Cats: {
+    //   Happy: require("../assets/images/Moods/Cats/happy.png"),
+    //   Sad: require("../assets/images/Moods/Cats/sad.png"),
+    //   Hungry: require("../assets/images/Moods/Cats/hungry.png"),
+    //   Cool: require("../assets/images/Moods/Cats/cool.png"),
+    //   Stressed: require("../assets/images/Moods/Cats/stressed.png"),
+    // },
+    // Dogs: {
+    //   Happy: require("../assets/images/Moods/Dogs/happy.png"),
+    //   Sad: require("../assets/images/Moods/Dogs/sad.png"),
+    //   Hungry: require("../assets/images/Moods/Dogs/hungry.png"),
+    //   Cool: require("../assets/images/Moods/Dogs/cool.png"),
+    //   Stressed: require("../assets/images/Moods/Dogs/stressed.png"),
+    // },
+    Emoji: {
+      Happy: require("../assets/images/Moods/Emoji/happy.png"),
+      Sad: require("../assets/images/Moods/Emoji/sad.png"),
+      Hungry: require("../assets/images/Moods/Emoji/hungry.png"),
+      Cool: require("../assets/images/Moods/Emoji/cool.png"),
+      Stressed: require("../assets/images/Moods/Emoji/stressed.png"),
+    },
+    // Memes: {
+    //   Happy: require("../assets/images/Moods/Memes/happy.png"),
+    //   Sad: require("../assets/images/Moods/Memes/sad.png"),
+    //   Hungry: require("../assets/images/Moods/Memes/hungry.png"),
+    //   Cool: require("../assets/images/Moods/Memes/cool.png"),
+    //   Stressed: require("../assets/images/Moods/Memes/stressed.png"),
+    // },
+  };
+
+  // Build moods array for the edit mood modal based on the current mood folder
   const moods = [
-    { label: "Happy", image: require("../assets/images/happy.png") },
-    { label: "Sad", image: require("../assets/images/sad.png") },
-    { label: "Hungry", image: require("../assets/images/hungry.png") },
-    { label: "Cool", image: require("../assets/images/cool.png") },
-    { label: "Stressed", image: require("../assets/images/stressed.png") },
+    { label: "Happy", image: moodImages[moodFolder]["Happy"] },
+    { label: "Sad", image: moodImages[moodFolder]["Sad"] },
+    { label: "Hungry", image: moodImages[moodFolder]["Hungry"] },
+    { label: "Cool", image: moodImages[moodFolder]["Cool"] },
+    { label: "Stressed", image: moodImages[moodFolder]["Stressed"] },
   ];
 
+  // Load floating features settings
+  useEffect(() => {
+    const loadFloatingSettings = async () => {
+      try {
+        const floatVal = await AsyncStorage.getItem("floatingEnabled");
+        const timerVal = await AsyncStorage.getItem("timerEnabled");
+        setFloatingEnabled(floatVal !== "false");
+        setTimerEnabled(timerVal !== "false");
+      } catch (error) {
+        console.error("Error reading floating settings", error);
+      }
+    };
+    loadFloatingSettings();
+  }, []);
+
+  // Fetch recipe data from storage
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
@@ -145,7 +211,7 @@ const RecipeDetail = () => {
     }
   };
 
-  // Timer functions
+  // Timer logic for the floating button
   const startTimer = (totalSeconds) => {
     setRemainingTime(totalSeconds);
     if (timerRef.current) clearInterval(timerRef.current);
@@ -173,13 +239,20 @@ const RecipeDetail = () => {
     return `${m}:${s}`;
   };
 
-  // Helper functions passed to RecipeDetailContent
+  // Helper function for formatting date
+  const formatDate = (dateValue) => {
+    if (!dateValue) return "";
+    const d = new Date(dateValue);
+    return d.toLocaleDateString();
+  };
+
+  // Helper functions for RecipeDetailContent
   const renderBulletList = (text) => {
     if (!text) return null;
-    return text.split("\n").map((line, index) => {
+    return text.split("\n").map((line, i) => {
       if (!line.trim()) return null;
       return (
-        <View key={index} style={contentStyles.bulletItem}>
+        <View key={i} style={contentStyles.bulletItem}>
           <Text style={contentStyles.bulletText}>- {line.trim()}</Text>
         </View>
       );
@@ -188,39 +261,60 @@ const RecipeDetail = () => {
 
   const renderNumberedList = (text) => {
     if (!text) return null;
-    return text.split("\n").map((line, index) => {
+    return text.split("\n").map((line, i) => {
       if (!line.trim()) return null;
       return (
-        <View key={index} style={contentStyles.numberedItem}>
+        <View key={i} style={contentStyles.numberedItem}>
           <Text style={contentStyles.numberedText}>
-            {index + 1}. {line.trim()}
+            {i + 1}. {line.trim()}
           </Text>
         </View>
       );
     });
   };
 
-  const formatDate = (dateValue) => {
-    if (!dateValue) return "";
-    const d = new Date(dateValue);
-    return d.toLocaleDateString();
-  };
-
+  // Instead of a static mapping, in edit mode we want to use the current mood folder.
   const getMoodImage = (mood) => {
-    switch (mood) {
-      case "Happy":
-        return require("../assets/images/happy.png");
-      case "Sad":
-        return require("../assets/images/sad.png");
-      case "Hungry":
-        return require("../assets/images/hungry.png");
-      case "Cool":
-        return require("../assets/images/cool.png");
-      case "Stressed":
-        return require("../assets/images/stressed.png");
-      default:
-        return null;
-    }
+    // Build a dynamic mapping using the current moodFolder
+    const dynamicMoodImages = {
+      Anime: {
+        Happy: require("../assets/images/Moods/Anime/happy.png"),
+        Sad: require("../assets/images/Moods/Anime/sad.png"),
+        Hungry: require("../assets/images/Moods/Anime/hungry.png"),
+        Cool: require("../assets/images/Moods/Anime/cool.png"),
+        Stressed: require("../assets/images/Moods/Anime/stressed.png"),
+      },
+      // Cats: {
+      //   Happy: require("../assets/images/Moods/Cats/happy.png"),
+      //   Sad: require("../assets/images/Moods/Cats/sad.png"),
+      //   Hungry: require("../assets/images/Moods/Cats/hungry.png"),
+      //   Cool: require("../assets/images/Moods/Cats/cool.png"),
+      //   Stressed: require("../assets/images/Moods/Cats/stressed.png"),
+      // },
+      // Dogs: {
+      //   Happy: require("../assets/images/Moods/Dogs/happy.png"),
+      //   Sad: require("../assets/images/Moods/Dogs/sad.png"),
+      //   Hungry: require("../assets/images/Moods/Dogs/hungry.png"),
+      //   Cool: require("../assets/images/Moods/Dogs/cool.png"),
+      //   Stressed: require("../assets/images/Moods/Dogs/stressed.png"),
+      // },
+      Emoji: {
+        Happy: require("../assets/images/Moods/Emoji/happy.png"),
+        Sad: require("../assets/images/Moods/Emoji/sad.png"),
+        Hungry: require("../assets/images/Moods/Emoji/hungry.png"),
+        Cool: require("../assets/images/Moods/Emoji/cool.png"),
+        Stressed: require("../assets/images/Moods/Emoji/stressed.png"),
+      },
+      // Memes: {
+      //   Happy: require("../assets/images/Moods/Memes/happy.png"),
+      //   Sad: require("../assets/images/Moods/Memes/sad.png"),
+      //   Hungry: require("../assets/images/Moods/Memes/hungry.png"),
+      //   Cool: require("../assets/images/Moods/Memes/cool.png"),
+      //   Stressed: require("../assets/images/Moods/Memes/stressed.png"),
+      // },
+    };
+    if (!dynamicMoodImages[moodFolder]) return null;
+    return dynamicMoodImages[moodFolder][mood];
   };
 
   if (isLoading) {
@@ -239,7 +333,7 @@ const RecipeDetail = () => {
   }
 
   // Main floating button content: if timer is active, show countdown.
-  const mainButtonContent = remainingTime !== null ? (
+  const mainFloatingButtonContent = remainingTime !== null ? (
     <Text style={styles.timerText}>{formatTime(remainingTime)}</Text>
   ) : null;
 
@@ -270,6 +364,8 @@ const RecipeDetail = () => {
           renderBulletList={renderBulletList}
           renderNumberedList={renderNumberedList}
           getMoodImage={getMoodImage}
+          toggleFavorite={toggleFavorite}
+          isFavorite={isFavorite}
         />
       )}
       <RecipeDetailBottomBar
@@ -305,8 +401,13 @@ const RecipeDetail = () => {
           }
         }}
       />
-      {/* Only show the floating timer button when not editing */}
-      {!isEditing && <FloatingTimerButton mainButtonContent={mainButtonContent} />}
+      {/* Only render the floating timer button if not editing and floatingEnabled is true */}
+      {!isEditing && floatingEnabled && (
+        <FloatingTimerButton
+          timerEnabled={timerEnabled}
+          mainButtonContent={mainFloatingButtonContent}
+        />
+      )}
     </View>
   );
 };
@@ -324,7 +425,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Additional helper styles used by RecipeDetailContent
 const contentStyles = StyleSheet.create({
   bulletItem: {
     flexDirection: "row",

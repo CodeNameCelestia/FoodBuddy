@@ -14,13 +14,13 @@ import { LinearGradient } from "expo-linear-gradient";
 const SplashScreen = () => {
   const router = useRouter();
   const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.8)).current; // Start slightly smaller
+  const scale = useRef(new Animated.Value(0.8)).current; // main content scale
+  const collabAnim = useRef(new Animated.Value(0)).current; // collaboration container animation
   const soundRef = useRef(null);
 
   useEffect(() => {
     const playSound = async () => {
       if (Platform.OS !== "web") {
-        // Skip sound on web
         try {
           const { sound } = await Audio.Sound.createAsync(
             require("../assets/sfx/sus.mp3")
@@ -35,7 +35,7 @@ const SplashScreen = () => {
 
     playSound();
 
-    // Entrance animation: fade in & scale up
+    // Animate in main content and collaboration container together.
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
@@ -47,8 +47,13 @@ const SplashScreen = () => {
         friction: 4,
         useNativeDriver: Platform.OS !== "web",
       }),
+      Animated.timing(collabAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: Platform.OS !== "web",
+      }),
     ]).start(() => {
-      // Hold for a while, then animate out (exit)
+      // After a delay, animate out all components.
       setTimeout(() => {
         Animated.parallel([
           Animated.timing(opacity, {
@@ -61,13 +66,16 @@ const SplashScreen = () => {
             duration: 1000,
             useNativeDriver: Platform.OS !== "web",
           }),
+          Animated.timing(collabAnim, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: Platform.OS !== "web",
+          }),
         ]).start(async () => {
-          // Stop and unload the sound before navigating
           if (soundRef.current) {
             await soundRef.current.stopAsync();
             await soundRef.current.unloadAsync();
           }
-          // On web, delay navigation a bit
           if (Platform.OS === "web") {
             setTimeout(() => {
               router.replace("/");
@@ -84,7 +92,7 @@ const SplashScreen = () => {
         soundRef.current.unloadAsync();
       }
     };
-  }, [opacity, scale, router]);
+  }, [opacity, scale, collabAnim, router]);
 
   return (
     <LinearGradient
@@ -94,7 +102,10 @@ const SplashScreen = () => {
       style={styles.gradient}
     >
       <Animated.View
-        style={[styles.container, { opacity, transform: [{ scale }] }]}
+        style={[
+          styles.container,
+          { opacity, transform: [{ scale }] },
+        ]}
       >
         <Image
           source={require("../assets/images/Logo.png")}
@@ -104,6 +115,38 @@ const SplashScreen = () => {
         <Text style={styles.tagline}>Your Personal Recipe Management App</Text>
         <Text style={styles.creatortxt}>Created by:</Text>
         <Text style={styles.creator}>Code_Celestia</Text>
+      </Animated.View>
+      <Animated.View
+        style={[
+          styles.collaborationContainer,
+          {
+            opacity: collabAnim,
+            transform: [
+              {
+                translateY: collabAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [20, 0], // starts 20px down and moves up to 0
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <Text style={styles.collaborationText}>In Collaboration With:</Text>
+        <View style={styles.logosContainer}>
+          <Image
+            source={require("../assets/images/react-logo.png")}
+            style={styles.collaborationLogo}
+          />
+          <Image
+            source={require("../assets/images/expo-go-logo.png")}
+            style={styles.collaborationLogo}
+          />
+          <Image
+            source={require("../assets/images/chatgpt-logo.png")}
+            style={styles.collaborationLogo}
+          />
+        </View>
       </Animated.View>
     </LinearGradient>
   );
@@ -152,5 +195,27 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     color: "#fff",
     opacity: 0.8,
+  },
+  collaborationContainer: {
+    position: "absolute",
+    bottom: 20,
+    width: "100%",
+    alignItems: "center",
+  },
+  collaborationText: {
+    fontSize: 16,
+    color: "#fff",
+    marginBottom: 10,
+  },
+  logosContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  collaborationLogo: {
+    width: 50,
+    height: 50,
+    marginHorizontal: 8,
+    resizeMode: "contain",
   },
 });

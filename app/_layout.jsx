@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Slot } from 'expo-router';
 import SplashScreen from '../components/SplashScreen';
 import { LayoutProvider } from '../contexts/LayoutContext';
+import { MoodProvider } from '../contexts/MoodContext';
 
 const RootLayout = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -17,9 +18,11 @@ const RootLayout = () => {
 
   return (
     <LayoutProvider>
-      <View style={styles.container}>
-        {showSplash ? <SplashScreen /> : <Slot />}
-      </View>
+      <MoodProvider>
+        <View style={styles.container}>
+          {showSplash ? <SplashScreen /> : <Slot />}
+        </View>
+      </MoodProvider>
     </LayoutProvider>
   );
 };

@@ -20,6 +20,7 @@ import ListRecipeCard from "../components/ListRecipeCard";
 import BottomNavbar from "../components/BottomNavbar";
 import NoMoodRecipeAlert from "../components/alerts/NoMoodRecipeAlert";
 import { LayoutContext } from "../contexts/LayoutContext";
+import { MoodContext } from "../contexts/MoodContext";
 
 const Home = () => {
   const router = useRouter();
@@ -34,6 +35,56 @@ const Home = () => {
 
   // Access the global layout value
   const { layout } = useContext(LayoutContext);
+  // Access the global mood folder from MoodContext
+  const { moodFolder } = useContext(MoodContext);
+
+  // Create a mapping for mood images based on folder
+  const moodImages = {
+    Anime: {
+      Happy: require("../assets/images/Moods/Anime/happy.png"),
+      Sad: require("../assets/images/Moods/Anime/sad.png"),
+      Hungry: require("../assets/images/Moods/Anime/hungry.png"),
+      Cool: require("../assets/images/Moods/Anime/cool.png"),
+      Stressed: require("../assets/images/Moods/Anime/stressed.png"),
+    },
+    // Cats: {
+    //   Happy: require("../assets/images/Moods/Cats/happy.png"),
+    //   Sad: require("../assets/images/Moods/Cats/sad.png"),
+    //   Hungry: require("../assets/images/Moods/Cats/hungry.png"),
+    //   Cool: require("../assets/images/Moods/Cats/cool.png"),
+    //   Stressed: require("../assets/images/Moods/Cats/stressed.png"),
+    // },
+    // Dogs: {
+    //   Happy: require("../assets/images/Moods/Dogs/happy.png"),
+    //   Sad: require("../assets/images/Moods/Dogs/sad.png"),
+    //   Hungry: require("../assets/images/Moods/Dogs/hungry.png"),
+    //   Cool: require("../assets/images/Moods/Dogs/cool.png"),
+    //   Stressed: require("../assets/images/Moods/Dogs/stressed.png"),
+    // },
+    Emoji: {
+      Happy: require("../assets/images/Moods/Emoji/happy.png"),
+      Sad: require("../assets/images/Moods/Emoji/sad.png"),
+      Hungry: require("../assets/images/Moods/Emoji/hungry.png"),
+      Cool: require("../assets/images/Moods/Emoji/cool.png"),
+      Stressed: require("../assets/images/Moods/Emoji/stressed.png"),
+    },
+    // Memes: {
+    //   Happy: require("../assets/images/Moods/Memes/happy.png"),
+    //   Sad: require("../assets/images/Moods/Memes/sad.png"),
+    //   Hungry: require("../assets/images/Moods/Memes/hungry.png"),
+    //   Cool: require("../assets/images/Moods/Memes/cool.png"),
+    //   Stressed: require("../assets/images/Moods/Memes/stressed.png"),
+    // },
+  };
+
+  // Build the moods array based on the current moodFolder
+  const moods = [
+    { label: "Happy", image: moodImages[moodFolder]["Happy"] },
+    { label: "Sad", image: moodImages[moodFolder]["Sad"] },
+    { label: "Hungry", image: moodImages[moodFolder]["Hungry"] },
+    { label: "Cool", image: moodImages[moodFolder]["Cool"] },
+    { label: "Stressed", image: moodImages[moodFolder]["Stressed"] },
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,14 +124,6 @@ const Home = () => {
   const handleViewRecipe = (id) => {
     router.push(`/recipeDetail?id=${id}`);
   };
-
-  const moods = [
-    { label: "Happy", image: require("../assets/images/happy.png") },
-    { label: "Sad", image: require("../assets/images/sad.png") },
-    { label: "Hungry", image: require("../assets/images/hungry.png") },
-    { label: "Cool", image: require("../assets/images/cool.png") },
-    { label: "Stressed", image: require("../assets/images/stressed.png") },
-  ];
 
   const handleMoodSelect = async (mood) => {
     setMoodModalVisible(false);
@@ -153,31 +196,15 @@ const Home = () => {
         {layout === "medium" ? (
           <View style={styles.gridContainer}>
             {filteredRecipes.map((item) => (
-              <MediumRecipeCard
-                key={item.id}
-                item={item}
-                onPress={handleViewRecipe}
-              />
+              <MediumRecipeCard key={item.id} item={item} onPress={handleViewRecipe} />
             ))}
           </View>
         ) : (
           filteredRecipes.map((item) => {
             if (layout === "default") {
-              return (
-                <RecipeCard
-                  key={item.id}
-                  item={item}
-                  onPress={handleViewRecipe}
-                />
-              );
+              return <RecipeCard key={item.id} item={item} onPress={handleViewRecipe} />;
             } else if (layout === "list") {
-              return (
-                <ListRecipeCard
-                  key={item.id}
-                  item={item}
-                  onPress={handleViewRecipe}
-                />
-              );
+              return <ListRecipeCard key={item.id} item={item} onPress={handleViewRecipe} />;
             }
           })
         )}
@@ -214,7 +241,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F5F5",
   },
-  /* Header */
   header: {
     backgroundColor: "#F8D64E",
     paddingHorizontal: 16,
@@ -233,7 +259,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
   },
-  /* Search Row */
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -262,7 +287,6 @@ const styles = StyleSheet.create({
     padding: 4,
     boxShadow: "0px 2px 4px rgba(0,0,0,0.5)",
   },
-  /* Scrollable Content */
   scrollContainer: {
     flex: 1,
     paddingHorizontal: 16,
@@ -273,9 +297,9 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between', // or 'center'
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     paddingHorizontal: 8,
   },
 });

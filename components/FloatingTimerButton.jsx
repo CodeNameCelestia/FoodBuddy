@@ -1,3 +1,4 @@
+// components/FloatingTimerButton.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
@@ -5,26 +6,26 @@ import {
   TouchableOpacity,
   Animated,
   PanResponder,
-  Modal,
-  TextInput,
   StyleSheet,
   Alert,
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import TimerModal from './TimerModal'; // adjust path if needed
+import TimerModal from './TimerModal';
+import TimerFeatureButton from './TimerFeatureButton';
 
-const FloatingTimerButton = ({ mainButtonContent }) => {
+const FloatingTimerButton = ({ timerEnabled = true, mainButtonContent }) => {
   const { width, height } = Dimensions.get('window');
-  // Set default position near the bottom-right corner.
   const pan = useRef(
     new Animated.ValueXY({ x: width - 80, y: height - 160 })
   ).current;
+
   const [expanded, setExpanded] = useState(false);
   const [timerModalVisible, setTimerModalVisible] = useState(false);
   const [remainingTime, setRemainingTime] = useState(null);
   const timerRef = useRef(null);
 
+  // PanResponder to drag the button
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -33,18 +34,17 @@ const FloatingTimerButton = ({ mainButtonContent }) => {
         pan.setOffset({ x: pan.x._value, y: pan.y._value });
         pan.setValue({ x: 0, y: 0 });
       },
-      onPanResponderMove: (evt, gestureState) => {
-        pan.setValue({ x: gestureState.dx, y: gestureState.dy });
-      },
+      onPanResponderMove: Animated.event(
+        [null, { dx: pan.x, dy: pan.y }],
+        { useNativeDriver: false }
+      ),
       onPanResponderRelease: () => {
         pan.flattenOffset();
       },
     })
   ).current;
 
-  const toggleExpand = () => {
-    setExpanded(!expanded);
-  };
+  const toggleExpand = () => setExpanded(!expanded);
 
   const startTimer = (totalSeconds) => {
     setRemainingTime(totalSeconds);
@@ -53,7 +53,7 @@ const FloatingTimerButton = ({ mainButtonContent }) => {
       setRemainingTime((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          Alert.alert('Timer', 'Time is up!');
+          Alert.alert("Timer", "Time is up!");
           return null;
         }
         return prev - 1;
@@ -73,7 +73,7 @@ const FloatingTimerButton = ({ mainButtonContent }) => {
     return `${m}:${s}`;
   };
 
-  // Use provided mainButtonContent; if not provided, fallback to a multipurpose icon.
+  // If user hasn't provided mainButtonContent, fallback to apps icon
   const mainContent = mainButtonContent || (
     <Ionicons name="apps-outline" size={28} color="#fff" />
   );
@@ -99,16 +99,16 @@ const FloatingTimerButton = ({ mainButtonContent }) => {
           </TouchableOpacity>
           {expanded && (
             <View style={styles.expandedButtonsContainer}>
-              <TouchableOpacity
-                onPress={() => {
-                  setTimerModalVisible(true);
-                  setExpanded(false);
-                }}
-                style={styles.expandedButton}
-              >
-                <Ionicons name="alarm" size={24} color="#fff" />
-              </TouchableOpacity>
-              {/* Future feature buttons can be added here */}
+              {/* Only show Timer button if timerEnabled is true */}
+              {timerEnabled && (
+                <TimerFeatureButton
+                  onPress={() => {
+                    setTimerModalVisible(true);
+                    setExpanded(false);
+                  }}
+                />
+              )}
+              {/* Additional feature buttons can go here */}
             </View>
           )}
         </View>
@@ -123,7 +123,6 @@ const styles = StyleSheet.create({
   floatingButtonContainer: {
     position: 'absolute',
     zIndex: 1000,
-    // The position will be controlled by pan.getLayout()
   },
   buttonWrapper: {
     position: 'relative',
@@ -144,19 +143,9 @@ const styles = StyleSheet.create({
   },
   expandedButtonsContainer: {
     position: 'absolute',
-    top: -70, // Positioned above the main button
+    top: -70,
     left: 0,
     right: 0,
     alignItems: 'center',
-  },
-  expandedButton: {
-    backgroundColor: '#FFA500',
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-    elevation: 5,
   },
 });

@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    margin: 8,
+    margin: 5,
     overflow: 'hidden',
     boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
     width: '45%', // Two cards per row

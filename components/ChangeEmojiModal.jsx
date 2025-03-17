@@ -4,11 +4,14 @@ import { Modal, View, Text, TouchableOpacity, StyleSheet, Image } from 'react-na
 import { MoodContext } from '../contexts/MoodContext';
 
 const emojiOptions = [
-  { label: 'Anime', folder: 'Anime', sample: require('../assets/images/Moods/Anime/happy.png') },
-//   { label: 'Cats', folder: 'Cats', sample: require('../assets/images/Moods/Cats/happy.png') },
-//   { label: 'Dogs', folder: 'Dogs', sample: require('../assets/images/Moods/Dogs/happy.png') },
   { label: 'Emoji', folder: 'Emoji', sample: require('../assets/images/Moods/Emoji/happy.png') },
-//   { label: 'Memes', folder: 'Memes', sample: require('../assets/images/Moods/Memes/happy.png') },
+  { label: 'Anime', folder: 'Anime', sample: require('../assets/images/Moods/Anime/happy.png') },
+  { label: 'Cats', folder: 'Cats', sample: require('../assets/images/Moods/Cats/happy.png') },
+  { label: 'Dogs', folder: 'Dogs', sample: require('../assets/images/Moods/Dogs/happy.png') },
+  { label: 'Pepe', folder: 'Pepe', sample: require('../assets/images/Moods/Pepe/happy.png') },
+  { label: 'Tiktok', folder: 'Tiktok', sample: require('../assets/images/Moods/Tiktok/happy.png') },
+  { label: 'Melody', folder: 'Melody', sample: require('../assets/images/Moods/Melody/happy.png') },
+  { label: 'Kuromi', folder: 'Kuromi', sample: require('../assets/images/Moods/Kuromi/happy.png') },
 ];
 
 const ChangeEmojiModal = ({ visible, onClose }) => {
@@ -78,7 +81,7 @@ const styles = StyleSheet.create({
   optionImage: {
     width: 60,
     height: 60,
-    borderRadius: 30,
+    borderRadius: 10,
     marginBottom: 5,
   },
   optionLabel: {

@@ -8,6 +8,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  BackHandler,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -17,9 +18,13 @@ import DeleteAlert from '../components/alerts/DeleteAlert';
 import BottomNavbar from '../components/BottomNavbar';
 import RecentlyRemoved from '../components/RecentlyRemoved';
 import LayoutSelection from '../components/LayoutSelection';
-import { LayoutContext } from '../contexts/LayoutContext';
 import FloatingFeaturesToggleModal from '../components/FloatingFeaturesToggleModal';
 import ChangeEmojiModal from '../components/ChangeEmojiModal';
+import AboutUsModal from '../components/AboutUsModal';
+import TermsModal from '../components/TermsModal';
+import PrivacyModal from '../components/PrivacyModal';
+import CollaboratorsModal from '../components/CollaboratorsModal'; // New import
+import { LayoutContext } from '../contexts/LayoutContext';
 
 const Settings = () => {
   const router = useRouter();
@@ -27,12 +32,16 @@ const Settings = () => {
   const [showLayoutSelection, setShowLayoutSelection] = useState(false);
   const [showToggleModal, setShowToggleModal] = useState(false);
   const [showChangeEmojiModal, setShowChangeEmojiModal] = useState(false);
+  const [showAboutUsModal, setShowAboutUsModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false); // New state
   const [hiddenRecipes, setHiddenRecipes] = useState([]);
   const [restoreAlertVisible, setRestoreAlertVisible] = useState(false);
   const [deleteAlertVisible, setDeleteAlertVisible] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
 
-  // Use the global layout state
+  // Global layout state
   const { layout, setLayout } = useContext(LayoutContext);
 
   // Fetch hidden recipes
@@ -52,7 +61,6 @@ const Settings = () => {
     }
   }, [showRecentlyRemoved]);
 
-  // Restore and delete functions remain as before…
   const handleRestore = async (recipe) => {
     const updatedRecipe = { ...recipe, hidden: false };
     try {
@@ -74,34 +82,95 @@ const Settings = () => {
     }
   };
 
-  // Main settings view
+  const handleExitApp = () => {
+    Alert.alert(
+      'Exit App',
+      'Are you sure you want to exit the app?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Exit', onPress: () => BackHandler.exitApp() },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  // Render main settings with uniform buttons arranged in a column below the header.
   const renderMainSettings = () => (
     <ScrollView contentContainerStyle={styles.settingsContainer}>
       <View style={styles.settingsOptions}>
+
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowRecentlyRemoved(true)}
         >
+          <Ionicons name="remove-circle" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>Recently Removed</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowLayoutSelection(true)}
         >
-          <Text style={styles.settingButtonText}>Layout</Text>
+          <Ionicons name="grid" size={24} color="#fff" style={styles.buttonIcon} />
+          <Text style={styles.settingButtonText}>Change Layout</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowToggleModal(true)}
         >
+          <Ionicons name="toggle" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>Toggle Floating & Timer</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowChangeEmojiModal(true)}
         >
+          <Ionicons name="happy" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>Change Emoji</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={() => setShowAboutUsModal(true)}
+        >
+          <Ionicons name="information-circle" size={24} color="#fff" style={styles.buttonIcon} />
+          <Text style={styles.settingButtonText}>About Us</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={() => setShowCollaboratorsModal(true)}
+        >
+          <Ionicons name="people-circle" size={24} color="#fff" style={styles.buttonIcon} />
+          <Text style={styles.settingButtonText}>Collaborators</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={() => setShowTermsModal(true)}
+        >
+          <Ionicons name="document-text" size={24} color="#fff" style={styles.buttonIcon} />
+          <Text style={styles.settingButtonText}>Terms & Conditions</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={() => setShowPrivacyModal(true)}
+        >
+          <Ionicons name="lock-closed" size={24} color="#fff" style={styles.buttonIcon} />
+          <Text style={styles.settingButtonText}>Privacy Policy</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={handleExitApp}
+        >
+          <Ionicons name="exit-outline" size={24} color="#fff" style={styles.buttonIcon} />
+          <Text style={styles.settingButtonText}>Exit App</Text>
+        </TouchableOpacity>
+
       </View>
     </ScrollView>
   );
@@ -124,19 +193,19 @@ const Settings = () => {
       </View>
       {/* Content */}
       {showLayoutSelection ? (
-        <LayoutSelection 
+        <LayoutSelection
           visible={showLayoutSelection}
           selectedLayout={layout}
           setSelectedLayout={setLayout}
           onClose={() => setShowLayoutSelection(false)}
         />
       ) : showRecentlyRemoved ? (
-        <RecentlyRemoved 
+        <RecentlyRemoved
           hiddenRecipes={hiddenRecipes}
-          onRestore={() => {}}
-          onDelete={() => {}}
+          onRestore={() => setRestoreAlertVisible(true)}
+          onDelete={() => setDeleteAlertVisible(true)}
           onBack={() => setShowRecentlyRemoved(false)}
-          setSelectedRecipe={() => {}}
+          setSelectedRecipe={setSelectedRecipe}
         />
       ) : (
         renderMainSettings()
@@ -162,7 +231,7 @@ const Settings = () => {
           setDeleteAlertVisible(false);
         }}
       />
-      {/* Toggle Floating & Timer Modal */}
+      {/* Floating Features Toggle Modal */}
       <FloatingFeaturesToggleModal
         visible={showToggleModal}
         onClose={() => setShowToggleModal(false)}
@@ -174,10 +243,26 @@ const Settings = () => {
       <ChangeEmojiModal
         visible={showChangeEmojiModal}
         onClose={() => setShowChangeEmojiModal(false)}
-        onSelect={(folder) => {
-          Alert.alert("Mood Folder Selected", `Selected: ${folder}`);
-          // Optionally update a global state or context so that getMoodImage uses the new folder.
-        }}
+      />
+      {/* About Us Modal */}
+      <AboutUsModal
+        visible={showAboutUsModal}
+        onClose={() => setShowAboutUsModal(false)}
+      />
+      {/* Terms & Conditions Modal */}
+      <TermsModal
+        visible={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
+      {/* Privacy Policy Modal */}
+      <PrivacyModal
+        visible={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+      />
+      {/* Collaborators Modal */}
+      <CollaboratorsModal
+        visible={showCollaboratorsModal}
+        onClose={() => setShowCollaboratorsModal(false)}
       />
     </View>
   );
@@ -235,17 +320,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '90%',
     backgroundColor: '#F8D64E',
     paddingVertical: 12,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     borderRadius: 30,
-    marginVertical: 10,
-    boxShadow: "0px 4px 4px rgba(0,0,0,0.3)",
+    marginVertical: 8,
+    justifyContent: 'flex-start',
+  },
+  buttonIcon: {
+    marginRight: 10,
   },
   settingButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    textAlign: 'left',
   },
   /* Bottom Navbar Container */
   navbarContainer: {

@@ -23,7 +23,7 @@ const ListRecipeCard = ({ item, onPress }) => {
         </Text>
       </View>
       <TouchableOpacity style={styles.viewButton} onPress={() => onPress(item.id)}>
-        <Text style={styles.viewButtonText}>View Recipe</Text>
+        <Text style={styles.viewButtonText}>View</Text>
       </TouchableOpacity>
     </View>
   );
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
     boxShadow: '0px 2px 4px rgba(0,0,0,0.1)',
-    width: '85%',
+    width: '100%',
     alignSelf: 'center',
   },
   recipeImage: {

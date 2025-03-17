@@ -15,6 +15,7 @@ import FloatingTimerButton from "../components/FloatingTimerButton";
 import EditMoodModal from "../components/EditMoodModal";
 import EditRecipeForm from "../components/EditRecipeForm";
 import RemoveAlert from "../components/alerts/RemoveAlert";
+import ChangeMoodImage from "../components/ChangeMoodImage";
 import { MoodContext } from "../contexts/MoodContext";
 
 const RecipeDetail = () => {
@@ -49,10 +50,10 @@ const RecipeDetail = () => {
   const [floatingEnabled, setFloatingEnabled] = useState(true);
   const [timerEnabled, setTimerEnabled] = useState(true);
 
-  // Global Mood Context to get the current mood folder
+  // Get the current mood folder from global context
   const { moodFolder } = useContext(MoodContext);
 
-  // Build a mood images mapping based on available folders
+  // Build a mapping for mood images (for edit mode if needed)
   const moodImages = {
     Anime: {
       Happy: require("../assets/images/Moods/Anime/happy.png"),
@@ -61,20 +62,20 @@ const RecipeDetail = () => {
       Cool: require("../assets/images/Moods/Anime/cool.png"),
       Stressed: require("../assets/images/Moods/Anime/stressed.png"),
     },
-    // Cats: {
-    //   Happy: require("../assets/images/Moods/Cats/happy.png"),
-    //   Sad: require("../assets/images/Moods/Cats/sad.png"),
-    //   Hungry: require("../assets/images/Moods/Cats/hungry.png"),
-    //   Cool: require("../assets/images/Moods/Cats/cool.png"),
-    //   Stressed: require("../assets/images/Moods/Cats/stressed.png"),
-    // },
-    // Dogs: {
-    //   Happy: require("../assets/images/Moods/Dogs/happy.png"),
-    //   Sad: require("../assets/images/Moods/Dogs/sad.png"),
-    //   Hungry: require("../assets/images/Moods/Dogs/hungry.png"),
-    //   Cool: require("../assets/images/Moods/Dogs/cool.png"),
-    //   Stressed: require("../assets/images/Moods/Dogs/stressed.png"),
-    // },
+    Cats: {
+      Happy: require("../assets/images/Moods/Cats/happy.png"),
+      Sad: require("../assets/images/Moods/Cats/sad.png"),
+      Hungry: require("../assets/images/Moods/Cats/hungry.png"),
+      Cool: require("../assets/images/Moods/Cats/cool.png"),
+      Stressed: require("../assets/images/Moods/Cats/stressed.png"),
+    },
+    Dogs: {
+      Happy: require("../assets/images/Moods/Dogs/happy.png"),
+      Sad: require("../assets/images/Moods/Dogs/sad.png"),
+      Hungry: require("../assets/images/Moods/Dogs/hungry.png"),
+      Cool: require("../assets/images/Moods/Dogs/cool.png"),
+      Stressed: require("../assets/images/Moods/Dogs/stressed.png"),
+    },
     Emoji: {
       Happy: require("../assets/images/Moods/Emoji/happy.png"),
       Sad: require("../assets/images/Moods/Emoji/sad.png"),
@@ -82,17 +83,39 @@ const RecipeDetail = () => {
       Cool: require("../assets/images/Moods/Emoji/cool.png"),
       Stressed: require("../assets/images/Moods/Emoji/stressed.png"),
     },
-    // Memes: {
-    //   Happy: require("../assets/images/Moods/Memes/happy.png"),
-    //   Sad: require("../assets/images/Moods/Memes/sad.png"),
-    //   Hungry: require("../assets/images/Moods/Memes/hungry.png"),
-    //   Cool: require("../assets/images/Moods/Memes/cool.png"),
-    //   Stressed: require("../assets/images/Moods/Memes/stressed.png"),
-    // },
+    Pepe: {
+      Happy: require("../assets/images/Moods/Pepe/happy.png"),
+      Sad: require("../assets/images/Moods/Pepe/sad.png"),
+      Hungry: require("../assets/images/Moods/Pepe/hungry.png"),
+      Cool: require("../assets/images/Moods/Pepe/cool.png"),
+      Stressed: require("../assets/images/Moods/Pepe/stressed.png"),
+    },
+    Tiktok: {
+      Happy: require("../assets/images/Moods/Tiktok/happy.png"),
+      Sad: require("../assets/images/Moods/Tiktok/sad.png"),
+      Hungry: require("../assets/images/Moods/Tiktok/hungry.png"),
+      Cool: require("../assets/images/Moods/Tiktok/cool.png"),
+      Stressed: require("../assets/images/Moods/Tiktok/stressed.png"),
+    },
+    Melody: {
+      Happy: require("../assets/images/Moods/Melody/happy.png"),
+      Sad: require("../assets/images/Moods/Melody/sad.png"),
+      Hungry: require("../assets/images/Moods/Melody/hungry.png"),
+      Cool: require("../assets/images/Moods/Melody/cool.png"),
+      Stressed: require("../assets/images/Moods/Melody/stressed.png"),
+    },
+    Kuromi: {
+      Happy: require("../assets/images/Moods/Kuromi/happy.png"),
+      Sad: require("../assets/images/Moods/Kuromi/sad.png"),
+      Hungry: require("../assets/images/Moods/Kuromi/hungry.png"),
+      Cool: require("../assets/images/Moods/Kuromi/cool.png"),
+      Stressed: require("../assets/images/Moods/Kuromi/stressed.png"),
+    },
+    // Additional folders can be added here.
   };
 
-  // Build moods array for the edit mood modal based on the current mood folder
-  const moods = [
+  // Build available moods for the EditMoodModal
+  const availableMoods = [
     { label: "Happy", image: moodImages[moodFolder]["Happy"] },
     { label: "Sad", image: moodImages[moodFolder]["Sad"] },
     { label: "Hungry", image: moodImages[moodFolder]["Hungry"] },
@@ -115,7 +138,7 @@ const RecipeDetail = () => {
     loadFloatingSettings();
   }, []);
 
-  // Fetch recipe data from storage
+  // Fetch recipe data
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
@@ -216,7 +239,7 @@ const RecipeDetail = () => {
     setRemainingTime(totalSeconds);
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
-      setRemainingTime((prev) => {
+      setRemainingTime(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
           Alert.alert("Timer", "Time is up!");
@@ -246,7 +269,7 @@ const RecipeDetail = () => {
     return d.toLocaleDateString();
   };
 
-  // Helper functions for RecipeDetailContent
+  // Helper functions for rendering lists
   const renderBulletList = (text) => {
     if (!text) return null;
     return text.split("\n").map((line, i) => {
@@ -271,50 +294,6 @@ const RecipeDetail = () => {
         </View>
       );
     });
-  };
-
-  // Instead of a static mapping, in edit mode we want to use the current mood folder.
-  const getMoodImage = (mood) => {
-    // Build a dynamic mapping using the current moodFolder
-    const dynamicMoodImages = {
-      Anime: {
-        Happy: require("../assets/images/Moods/Anime/happy.png"),
-        Sad: require("../assets/images/Moods/Anime/sad.png"),
-        Hungry: require("../assets/images/Moods/Anime/hungry.png"),
-        Cool: require("../assets/images/Moods/Anime/cool.png"),
-        Stressed: require("../assets/images/Moods/Anime/stressed.png"),
-      },
-      // Cats: {
-      //   Happy: require("../assets/images/Moods/Cats/happy.png"),
-      //   Sad: require("../assets/images/Moods/Cats/sad.png"),
-      //   Hungry: require("../assets/images/Moods/Cats/hungry.png"),
-      //   Cool: require("../assets/images/Moods/Cats/cool.png"),
-      //   Stressed: require("../assets/images/Moods/Cats/stressed.png"),
-      // },
-      // Dogs: {
-      //   Happy: require("../assets/images/Moods/Dogs/happy.png"),
-      //   Sad: require("../assets/images/Moods/Dogs/sad.png"),
-      //   Hungry: require("../assets/images/Moods/Dogs/hungry.png"),
-      //   Cool: require("../assets/images/Moods/Dogs/cool.png"),
-      //   Stressed: require("../assets/images/Moods/Dogs/stressed.png"),
-      // },
-      Emoji: {
-        Happy: require("../assets/images/Moods/Emoji/happy.png"),
-        Sad: require("../assets/images/Moods/Emoji/sad.png"),
-        Hungry: require("../assets/images/Moods/Emoji/hungry.png"),
-        Cool: require("../assets/images/Moods/Emoji/cool.png"),
-        Stressed: require("../assets/images/Moods/Emoji/stressed.png"),
-      },
-      // Memes: {
-      //   Happy: require("../assets/images/Moods/Memes/happy.png"),
-      //   Sad: require("../assets/images/Moods/Memes/sad.png"),
-      //   Hungry: require("../assets/images/Moods/Memes/hungry.png"),
-      //   Cool: require("../assets/images/Moods/Memes/cool.png"),
-      //   Stressed: require("../assets/images/Moods/Memes/stressed.png"),
-      // },
-    };
-    if (!dynamicMoodImages[moodFolder]) return null;
-    return dynamicMoodImages[moodFolder][mood];
   };
 
   if (isLoading) {
@@ -363,7 +342,14 @@ const RecipeDetail = () => {
           formatDate={formatDate}
           renderBulletList={renderBulletList}
           renderNumberedList={renderNumberedList}
-          getMoodImage={getMoodImage}
+          // In RecipeDetailContent, replace inline mood image logic with ChangeMoodImage:
+          // For example:
+          //   {recipeData.mood && (
+          //      <View style={styles.moodContainer}>
+          //         <Text style={styles.moodLabel}>Mood: {recipeData.mood}</Text>
+          //         <ChangeMoodImage mood={recipeData.mood} style={styles.moodImage} />
+          //      </View>
+          //   )}
           toggleFavorite={toggleFavorite}
           isFavorite={isFavorite}
         />
@@ -375,7 +361,7 @@ const RecipeDetail = () => {
       />
       <EditMoodModal
         visible={editMoodModalVisible}
-        moods={moods}
+        moods={availableMoods}
         onSelect={(mood) => {
           setEditedMood(mood);
           setEditMoodModalVisible(false);
@@ -422,6 +408,19 @@ const styles = StyleSheet.create({
   timerText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  moodContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  moodLabel: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  moodImage: {
+    width: 30,
+    height: 30,
   },
 });
 

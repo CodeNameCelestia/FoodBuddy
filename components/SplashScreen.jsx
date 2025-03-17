@@ -180,18 +180,18 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   tagline: {
-    fontSize: 20,
+    fontSize: 16,
     color: "#fff",
     marginBottom: 30,
     fontStyle: "italic",
   },
   creatortxt: {
-    fontSize: 20,
+    fontSize: 18,
     color: "#fff",
     opacity: 0.8,
   },
   creator: {
-    fontSize: 25,
+    fontSize: 22,
     fontWeight: "400",
     color: "#fff",
     opacity: 0.8,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   collaborationText: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#fff",
     marginBottom: 10,
   },
@@ -213,8 +213,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   collaborationLogo: {
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     marginHorizontal: 8,
     resizeMode: "contain",
   },

@@ -47,20 +47,20 @@ const Home = () => {
       Cool: require("../assets/images/Moods/Anime/cool.png"),
       Stressed: require("../assets/images/Moods/Anime/stressed.png"),
     },
-    // Cats: {
-    //   Happy: require("../assets/images/Moods/Cats/happy.png"),
-    //   Sad: require("../assets/images/Moods/Cats/sad.png"),
-    //   Hungry: require("../assets/images/Moods/Cats/hungry.png"),
-    //   Cool: require("../assets/images/Moods/Cats/cool.png"),
-    //   Stressed: require("../assets/images/Moods/Cats/stressed.png"),
-    // },
-    // Dogs: {
-    //   Happy: require("../assets/images/Moods/Dogs/happy.png"),
-    //   Sad: require("../assets/images/Moods/Dogs/sad.png"),
-    //   Hungry: require("../assets/images/Moods/Dogs/hungry.png"),
-    //   Cool: require("../assets/images/Moods/Dogs/cool.png"),
-    //   Stressed: require("../assets/images/Moods/Dogs/stressed.png"),
-    // },
+    Cats: {
+      Happy: require("../assets/images/Moods/Cats/happy.png"),
+      Sad: require("../assets/images/Moods/Cats/sad.png"),
+      Hungry: require("../assets/images/Moods/Cats/hungry.png"),
+      Cool: require("../assets/images/Moods/Cats/cool.png"),
+      Stressed: require("../assets/images/Moods/Cats/stressed.png"),
+    },
+    Dogs: {
+      Happy: require("../assets/images/Moods/Dogs/happy.png"),
+      Sad: require("../assets/images/Moods/Dogs/sad.png"),
+      Hungry: require("../assets/images/Moods/Dogs/hungry.png"),
+      Cool: require("../assets/images/Moods/Dogs/cool.png"),
+      Stressed: require("../assets/images/Moods/Dogs/stressed.png"),
+    },
     Emoji: {
       Happy: require("../assets/images/Moods/Emoji/happy.png"),
       Sad: require("../assets/images/Moods/Emoji/sad.png"),
@@ -68,13 +68,34 @@ const Home = () => {
       Cool: require("../assets/images/Moods/Emoji/cool.png"),
       Stressed: require("../assets/images/Moods/Emoji/stressed.png"),
     },
-    // Memes: {
-    //   Happy: require("../assets/images/Moods/Memes/happy.png"),
-    //   Sad: require("../assets/images/Moods/Memes/sad.png"),
-    //   Hungry: require("../assets/images/Moods/Memes/hungry.png"),
-    //   Cool: require("../assets/images/Moods/Memes/cool.png"),
-    //   Stressed: require("../assets/images/Moods/Memes/stressed.png"),
-    // },
+    Pepe: {
+      Happy: require("../assets/images/Moods/Pepe/happy.png"),
+      Sad: require("../assets/images/Moods/Pepe/sad.png"),
+      Hungry: require("../assets/images/Moods/Pepe/hungry.png"),
+      Cool: require("../assets/images/Moods/Pepe/cool.png"),
+      Stressed: require("../assets/images/Moods/Pepe/stressed.png"),
+    },
+    Tiktok: {
+      Happy: require("../assets/images/Moods/Tiktok/happy.png"),
+      Sad: require("../assets/images/Moods/Tiktok/sad.png"),
+      Hungry: require("../assets/images/Moods/Tiktok/hungry.png"),
+      Cool: require("../assets/images/Moods/Tiktok/cool.png"),
+      Stressed: require("../assets/images/Moods/Tiktok/stressed.png"),
+    },
+    Melody: {
+      Happy: require("../assets/images/Moods/Melody/happy.png"),
+      Sad: require("../assets/images/Moods/Melody/sad.png"),
+      Hungry: require("../assets/images/Moods/Melody/hungry.png"),
+      Cool: require("../assets/images/Moods/Melody/cool.png"),
+      Stressed: require("../assets/images/Moods/Melody/stressed.png"),
+    },
+    Kuromi: {
+      Happy: require("../assets/images/Moods/Kuromi/happy.png"),
+      Sad: require("../assets/images/Moods/Kuromi/sad.png"),
+      Hungry: require("../assets/images/Moods/Kuromi/hungry.png"),
+      Cool: require("../assets/images/Moods/Kuromi/cool.png"),
+      Stressed: require("../assets/images/Moods/Kuromi/stressed.png"),
+    },
   };
 
   // Build the moods array based on the current moodFolder

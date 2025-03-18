@@ -23,7 +23,8 @@ import ChangeEmojiModal from '../components/ChangeEmojiModal';
 import AboutUsModal from '../components/AboutUsModal';
 import TermsModal from '../components/TermsModal';
 import PrivacyModal from '../components/PrivacyModal';
-import CollaboratorsModal from '../components/CollaboratorsModal'; // New import
+import CollaboratorsModal from '../components/CollaboratorsModal';
+import ChangeTimerSoundModal from '../components/ChangeTimerSoundModal'; // New import
 import { LayoutContext } from '../contexts/LayoutContext';
 
 const Settings = () => {
@@ -35,7 +36,8 @@ const Settings = () => {
   const [showAboutUsModal, setShowAboutUsModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false); // New state
+  const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false);
+  const [showTimerSoundModal, setShowTimerSoundModal] = useState(false); // New state
   const [hiddenRecipes, setHiddenRecipes] = useState([]);
   const [restoreAlertVisible, setRestoreAlertVisible] = useState(false);
   const [deleteAlertVisible, setDeleteAlertVisible] = useState(false);
@@ -94,11 +96,10 @@ const Settings = () => {
     );
   };
 
-  // Render main settings with uniform buttons arranged in a column below the header.
+  // Render main settings as a column of uniform buttons with icons.
   const renderMainSettings = () => (
     <ScrollView contentContainerStyle={styles.settingsContainer}>
       <View style={styles.settingsOptions}>
-
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowRecentlyRemoved(true)}
@@ -106,7 +107,6 @@ const Settings = () => {
           <Ionicons name="remove-circle" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>Recently Removed</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowLayoutSelection(true)}
@@ -114,7 +114,6 @@ const Settings = () => {
           <Ionicons name="grid" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>Change Layout</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowToggleModal(true)}
@@ -122,7 +121,6 @@ const Settings = () => {
           <Ionicons name="toggle" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>Toggle Floating & Timer</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowChangeEmojiModal(true)}
@@ -130,7 +128,13 @@ const Settings = () => {
           <Ionicons name="happy" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>Change Emoji</Text>
         </TouchableOpacity>
-
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={() => setShowTimerSoundModal(true)}
+        >
+          <Ionicons name="volume-high" size={24} color="#fff" style={styles.buttonIcon} />
+          <Text style={styles.settingButtonText}>Change Timer Sound</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowAboutUsModal(true)}
@@ -138,7 +142,6 @@ const Settings = () => {
           <Ionicons name="information-circle" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>About Us</Text>
         </TouchableOpacity>
-        
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowCollaboratorsModal(true)}
@@ -146,7 +149,6 @@ const Settings = () => {
           <Ionicons name="people-circle" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>Collaborators</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowTermsModal(true)}
@@ -154,7 +156,6 @@ const Settings = () => {
           <Ionicons name="document-text" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>Terms & Conditions</Text>
         </TouchableOpacity>
-        
         <TouchableOpacity
           style={styles.settingButton}
           onPress={() => setShowPrivacyModal(true)}
@@ -162,7 +163,6 @@ const Settings = () => {
           <Ionicons name="lock-closed" size={24} color="#fff" style={styles.buttonIcon} />
           <Text style={styles.settingButtonText}>Privacy Policy</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.settingButton}
           onPress={handleExitApp}
@@ -263,6 +263,12 @@ const Settings = () => {
       <CollaboratorsModal
         visible={showCollaboratorsModal}
         onClose={() => setShowCollaboratorsModal(false)}
+      />
+      {/* New Change Timer Sound Modal */}
+      <ChangeTimerSoundModal
+        visible={showTimerSoundModal}
+        onClose={() => setShowTimerSoundModal(false)}
+        onSelect={(sound) => console.log('Selected timer sound:', sound)}
       />
     </View>
   );

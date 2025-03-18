@@ -4,6 +4,10 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 ## Get started
 
+0. Set Powershell Policy
+   ```bash
+   Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
 1. Install dependencies
 
    ```bash
@@ -14,6 +18,9 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
    ```bash
     npx expo start
+   ```
+   ```bash
+    npx expo start --clear
    ```
 
 In the output, you'll find options to open the app in a

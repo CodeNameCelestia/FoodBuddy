@@ -12,7 +12,7 @@ const RootLayout = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 5000); // Show splash for 5 seconds
+    }, 7000); // Updated duration to 7 seconds
     return () => clearTimeout(timer);
   }, []);
 

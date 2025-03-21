@@ -26,8 +26,11 @@ const FloatingTimerButton = ({ timerEnabled = true, mainButtonContent }) => {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
+      onStartShouldSetPanResponder: (evt, gestureState) => false, // do not capture tap gestures immediately
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        // Only capture the gesture if the movement is significant (e.g., more than 10 pixels)
+        return Math.abs(gestureState.dx) > 10 || Math.abs(gestureState.dy) > 10;
+      },
       onPanResponderGrant: () => {
         pan.setOffset({ x: pan.x._value, y: pan.y._value });
         pan.setValue({ x: 0, y: 0 });

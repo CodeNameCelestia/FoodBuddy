@@ -234,6 +234,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0c209",
   },
   tabLabel: {
-    fontSize: 11,
+    fontSize: 10,
   },
 });

@@ -1,5 +1,5 @@
 // components/ChangeTimerSoundModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
 
 const soundOptions = [
   { key: 'timer', displayName: 'Default' },
@@ -17,17 +18,37 @@ const soundOptions = [
   { key: 'Happy', displayName: 'Happy' },
   { key: 'Chipi-chipi', displayName: 'Chipi-chipi' },
   { key: 'Megalovania', displayName: 'Megalovania' },
+  { key: 'CarelessWhisper', displayName: 'Careless Whisper' },
 ];
+
+const soundMapping = {
+  timer: require('../assets/sfx/timer.mp3'),
+  Bell: require('../assets/sfx/Bell.mp3'),
+  Maxwell: require('../assets/sfx/Maxwell.mp3'),
+  Happy: require('../assets/sfx/Happy.mp3'),
+  'Chipi-chipi': require('../assets/sfx/Chipi-chipi.mp3'),
+  Megalovania: require('../assets/sfx/Megalovania.mp3'),
+  CarelessWhisper: require('../assets/sfx/CarelessWhisper.mp3'),
+};
 
 const ChangeTimerSoundModal = ({ visible, onClose, onSelect }) => {
   const [selectedSound, setSelectedSound] = useState('timer');
+  const [initialSound, setInitialSound] = useState(null);
+  const soundSampleRef = useRef(null);
+  const timeoutRef = useRef(null);
 
+  // Load saved sound from AsyncStorage when the modal becomes visible.
   useEffect(() => {
     const loadSound = async () => {
       try {
         const storedSound = await AsyncStorage.getItem('timerSound');
         if (storedSound) {
           setSelectedSound(storedSound);
+          setInitialSound(storedSound);
+        } else {
+          // If nothing is stored, use default.
+          setSelectedSound('timer');
+          setInitialSound('timer');
         }
       } catch (error) {
         console.error('Error loading timer sound', error);
@@ -38,11 +59,64 @@ const ChangeTimerSoundModal = ({ visible, onClose, onSelect }) => {
     }
   }, [visible]);
 
+  // Function to stop any currently playing sample.
+  const stopSampleSound = async () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (soundSampleRef.current) {
+      try {
+        await soundSampleRef.current.stopAsync();
+        await soundSampleRef.current.unloadAsync();
+      } catch (error) {
+        console.error("Error stopping sample sound:", error);
+      }
+      soundSampleRef.current = null;
+    }
+  };
+
+  // When selectedSound changes and is different from the initial sound, play a 10-second sample.
+  useEffect(() => {
+    const playSample = async () => {
+      await stopSampleSound();
+      try {
+        const { sound } = await Audio.Sound.createAsync(soundMapping[selectedSound]);
+        soundSampleRef.current = sound;
+        // Loop the sound sample.
+        await sound.setIsLoopingAsync(true);
+        await sound.playAsync();
+        // Stop the sample after 10 seconds.
+        timeoutRef.current = setTimeout(async () => {
+          await stopSampleSound();
+        }, 10000);
+      } catch (error) {
+        console.error("Error playing sample sound:", error);
+      }
+    };
+
+    // Only play sample if the modal is visible and the selected sound is different from the initial one.
+    if (visible && selectedSound && initialSound && selectedSound !== initialSound) {
+      playSample();
+    } else {
+      // Otherwise, ensure no sample is playing.
+      stopSampleSound();
+    }
+
+    return () => {
+      stopSampleSound();
+    };
+  }, [selectedSound, visible, initialSound]);
+
   const handleSelectSound = (soundKey) => {
-    setSelectedSound(soundKey);
+    // Only play sample if the new selection is different from the currently selected sound.
+    if (soundKey !== selectedSound) {
+      setSelectedSound(soundKey);
+    }
   };
 
   const handleSave = async () => {
+    await stopSampleSound();
     try {
       await AsyncStorage.setItem('timerSound', selectedSound);
       if (onSelect) {

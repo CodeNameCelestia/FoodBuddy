@@ -31,6 +31,7 @@ const TimerAlert = ({ visible, onClose }) => {
     Happy: require('../../assets/sfx/Happy.mp3'),
     'Chipi-chipi': require('../../assets/sfx/Chipi-chipi.mp3'),
     Megalovania: require('../../assets/sfx/Megalovania.mp3'),
+    CarelessWhisper: require('../../assets/sfx/CarelessWhisper.mp3'),
   };
 
   // Play the selected sound on loop when the modal is visible.

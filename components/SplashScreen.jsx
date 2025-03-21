@@ -14,78 +14,80 @@ import { LinearGradient } from "expo-linear-gradient";
 const SplashScreen = () => {
   const router = useRouter();
   const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.8)).current; // main content scale
-  const collabAnim = useRef(new Animated.Value(0)).current; // collaboration container animation
+  const scale = useRef(new Animated.Value(0.8)).current;
+  const collabAnim = useRef(new Animated.Value(0)).current;
   const soundRef = useRef(null);
 
   useEffect(() => {
-    const playSound = async () => {
+    // Delay animation and sound by 2 seconds.
+    setTimeout(() => {
+      // Play sound when the animation starts.
       if (Platform.OS !== "web") {
-        try {
-          const { sound } = await Audio.Sound.createAsync(
-            require("../assets/sfx/sus.mp3")
-          );
-          soundRef.current = sound;
-          await sound.playAsync();
-        } catch (error) {
-          console.error("Error loading sound:", error);
-        }
+        (async () => {
+          try {
+            const { sound } = await Audio.Sound.createAsync(
+              require("../assets/sfx/sus.mp3")
+            );
+            soundRef.current = sound;
+            await sound.playAsync();
+          } catch (error) {
+            console.error("Error loading sound:", error);
+          }
+        })();
       }
-    };
 
-    playSound();
-
-    // Animate in main content and collaboration container together.
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: Platform.OS !== "web",
-      }),
-      Animated.spring(scale, {
-        toValue: 1,
-        friction: 4,
-        useNativeDriver: Platform.OS !== "web",
-      }),
-      Animated.timing(collabAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: Platform.OS !== "web",
-      }),
-    ]).start(() => {
-      // After a delay, animate out all components.
-      setTimeout(() => {
-        Animated.parallel([
-          Animated.timing(opacity, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: Platform.OS !== "web",
-          }),
-          Animated.timing(scale, {
-            toValue: 0.1,
-            duration: 1000,
-            useNativeDriver: Platform.OS !== "web",
-          }),
-          Animated.timing(collabAnim, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: Platform.OS !== "web",
-          }),
-        ]).start(async () => {
-          if (soundRef.current) {
-            await soundRef.current.stopAsync();
-            await soundRef.current.unloadAsync();
-          }
-          if (Platform.OS === "web") {
-            setTimeout(() => {
+      // Animate in main content and collaboration container together.
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: Platform.OS !== "web",
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          friction: 4,
+          useNativeDriver: Platform.OS !== "web",
+        }),
+        Animated.timing(collabAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: Platform.OS !== "web",
+        }),
+      ]).start(() => {
+        // After a delay, animate out all components.
+        setTimeout(() => {
+          Animated.parallel([
+            Animated.timing(opacity, {
+              toValue: 0,
+              duration: 1000,
+              useNativeDriver: Platform.OS !== "web",
+            }),
+            Animated.timing(scale, {
+              toValue: 0.1,
+              duration: 1000,
+              useNativeDriver: Platform.OS !== "web",
+            }),
+            Animated.timing(collabAnim, {
+              toValue: 0,
+              duration: 1000,
+              useNativeDriver: Platform.OS !== "web",
+            }),
+          ]).start(async () => {
+            if (soundRef.current) {
+              await soundRef.current.stopAsync();
+              await soundRef.current.unloadAsync();
+            }
+            if (Platform.OS === "web") {
+              setTimeout(() => {
+                router.replace("/");
+              }, 300);
+            } else {
               router.replace("/");
-            }, 300);
-          } else {
-            router.replace("/");
-          }
-        });
-      }, 3000);
-    });
+            }
+          });
+        }, 3000);
+      });
+    }, 2000);
 
     return () => {
       if (soundRef.current) {
@@ -125,7 +127,7 @@ const SplashScreen = () => {
               {
                 translateY: collabAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [20, 0], // starts 20px down and moves up to 0
+                  outputRange: [20, 0],
                 }),
               },
             ],

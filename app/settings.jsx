@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Alert,
   BackHandler,
+  Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -27,6 +28,7 @@ import CollaboratorsModal from '../components/CollaboratorsModal';
 import ChangeTimerSoundModal from '../components/ChangeTimerSoundModal';
 import SpecialTanksModal from '../components/SpecialTanksModal';
 import { LayoutContext } from '../contexts/LayoutContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Settings = () => {
   const router = useRouter();
@@ -44,6 +46,7 @@ const Settings = () => {
   const [restoreAlertVisible, setRestoreAlertVisible] = useState(false);
   const [deleteAlertVisible, setDeleteAlertVisible] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [howToCookChecklistEnabled, setHowToCookChecklistEnabled] = useState(true);
 
   // Global layout state
   const { layout, setLayout } = useContext(LayoutContext);
@@ -64,6 +67,29 @@ const Settings = () => {
       fetchHiddenRecipes();
     }
   }, [showRecentlyRemoved]);
+
+  // Load checklist toggle from AsyncStorage
+  useEffect(() => {
+    const loadChecklistSetting = async () => {
+      try {
+        const val = await AsyncStorage.getItem("howToCookChecklistEnabled");
+        setHowToCookChecklistEnabled(val !== "false");
+      } catch (error) {
+        // ignore
+      }
+    };
+    loadChecklistSetting();
+  }, []);
+
+  // Save checklist toggle to AsyncStorage
+  const handleChecklistToggle = async (value) => {
+    setHowToCookChecklistEnabled(value);
+    try {
+      await AsyncStorage.setItem("howToCookChecklistEnabled", value ? "true" : "false");
+    } catch (error) {
+      // ignore
+    }
+  };
 
   const handleRestore = async (recipe) => {
     const updatedRecipe = { ...recipe, hidden: false };
@@ -123,7 +149,7 @@ const Settings = () => {
           </TouchableOpacity>
           <TouchableOpacity style={styles.settingButton} onPress={() => setShowToggleModal(true)}>
             <Ionicons name="toggle" size={24} color="#fff" style={styles.buttonIcon} />
-            <Text style={styles.settingButtonText}>Toggle Floating & Timer</Text>
+            <Text style={styles.settingButtonText}>Recipe Features</Text>
           </TouchableOpacity>
         </View>
       </View>

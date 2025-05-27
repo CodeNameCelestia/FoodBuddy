@@ -49,6 +49,7 @@ const RecipeDetail = () => {
   // Floating features toggles (loaded from AsyncStorage)
   const [floatingEnabled, setFloatingEnabled] = useState(true);
   const [timerEnabled, setTimerEnabled] = useState(true);
+  const [howToCookChecklistEnabled, setHowToCookChecklistEnabled] = useState(true);
 
   // Get the current mood folder from global context
   const { moodFolder } = useContext(MoodContext);
@@ -163,6 +164,18 @@ const RecipeDetail = () => {
     };
     fetchRecipe();
   }, [id]);
+
+  useEffect(() => {
+    const loadChecklistSetting = async () => {
+      try {
+        const val = await AsyncStorage.getItem("howToCookChecklistEnabled");
+        setHowToCookChecklistEnabled(val !== "false");
+      } catch (error) {
+        // ignore
+      }
+    };
+    loadChecklistSetting();
+  }, []);
 
   const pickImage = async (source) => {
     let result;
@@ -341,17 +354,9 @@ const RecipeDetail = () => {
           recipeData={recipeData}
           formatDate={formatDate}
           renderBulletList={renderBulletList}
-          renderNumberedList={renderNumberedList}
-          // In RecipeDetailContent, replace inline mood image logic with ChangeMoodImage:
-          // For example:
-          //   {recipeData.mood && (
-          //      <View style={styles.moodContainer}>
-          //         <Text style={styles.moodLabel}>Mood: {recipeData.mood}</Text>
-          //         <ChangeMoodImage mood={recipeData.mood} style={styles.moodImage} />
-          //      </View>
-          //   )}
           toggleFavorite={toggleFavorite}
           isFavorite={isFavorite}
+          howToCookChecklistEnabled={howToCookChecklistEnabled}
         />
       )}
       <RecipeDetailBottomBar

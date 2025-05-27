@@ -1,85 +1,36 @@
 // components/RecipeDetailContent.jsx
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { ScrollView, Image, Text, View, TouchableOpacity, StyleSheet } from 'react-native';
 import { MoodContext } from '../contexts/MoodContext';
-
-// Preload all mood images by folder
-const moodImages = {
-  Anime: {
-    happy: require("../assets/images/Moods/Anime/happy.png"),
-    sad: require("../assets/images/Moods/Anime/sad.png"),
-    hungry: require("../assets/images/Moods/Anime/hungry.png"),
-    cool: require("../assets/images/Moods/Anime/cool.png"),
-    stressed: require("../assets/images/Moods/Anime/stressed.png"),
-  },
-  Cats: {
-    happy: require("../assets/images/Moods/Cats/happy.png"),
-    sad: require("../assets/images/Moods/Cats/sad.png"),
-    hungry: require("../assets/images/Moods/Cats/hungry.png"),
-    cool: require("../assets/images/Moods/Cats/cool.png"),
-    stressed: require("../assets/images/Moods/Cats/stressed.png"),
-  },
-  Dogs: {
-    happy: require("../assets/images/Moods/Dogs/happy.png"),
-    sad: require("../assets/images/Moods/Dogs/sad.png"),
-    hungry: require("../assets/images/Moods/Dogs/hungry.png"),
-    cool: require("../assets/images/Moods/Dogs/cool.png"),
-    stressed: require("../assets/images/Moods/Dogs/stressed.png"),
-  },
-  Emoji: {
-    happy: require("../assets/images/Moods/Emoji/happy.png"),
-    sad: require("../assets/images/Moods/Emoji/sad.png"),
-    hungry: require("../assets/images/Moods/Emoji/hungry.png"),
-    cool: require("../assets/images/Moods/Emoji/cool.png"),
-    stressed: require("../assets/images/Moods/Emoji/stressed.png"),
-  },
-  Pepe: {
-    happy: require("../assets/images/Moods/Pepe/happy.png"),
-    sad: require("../assets/images/Moods/Pepe/sad.png"),
-    hungry: require("../assets/images/Moods/Pepe/hungry.png"),
-    cool: require("../assets/images/Moods/Pepe/cool.png"),
-    stressed: require("../assets/images/Moods/Pepe/stressed.png"),
-  },
-  Tiktok: {
-    happy: require("../assets/images/Moods/Tiktok/happy.png"),
-    sad: require("../assets/images/Moods/Tiktok/sad.png"),
-    hungry: require("../assets/images/Moods/Tiktok/hungry.png"),
-    cool: require("../assets/images/Moods/Tiktok/cool.png"),
-    stressed: require("../assets/images/Moods/Tiktok/stressed.png"),
-  },
-  Melody: {
-    happy: require("../assets/images/Moods/Melody/happy.png"),
-    sad: require("../assets/images/Moods/Melody/sad.png"),
-    hungry: require("../assets/images/Moods/Melody/hungry.png"),
-    cool: require("../assets/images/Moods/Melody/cool.png"),
-    stressed: require("../assets/images/Moods/Melody/stressed.png"),
-  },
-  Kuromi: {
-    happy: require("../assets/images/Moods/Kuromi/happy.png"),
-    sad: require("../assets/images/Moods/Kuromi/sad.png"),
-    hungry: require("../assets/images/Moods/Kuromi/hungry.png"),
-    cool: require("../assets/images/Moods/Kuromi/cool.png"),
-    stressed: require("../assets/images/Moods/Kuromi/stressed.png"),
-  },
-};
+import ChangeMoodImage from './ChangeMoodImage';
 
 const RecipeDetailContent = ({
   recipeData,
   formatDate,
   renderBulletList,
-  renderNumberedList,
   toggleFavorite,
   isFavorite,
+  howToCookChecklistEnabled = true,
 }) => {
   // Get the selected mood folder from context.
   const { moodFolder } = useContext(MoodContext);
 
-  // Use the selected folder to retrieve the appropriate mood image.
-  const getMoodImage = (mood) => {
-    if (!moodImages[moodFolder]) return null;
-    // Assuming the mood text in recipeData matches the key in lowercase.
-    const key = mood.toLowerCase();
-    return moodImages[moodFolder][key];
+  // Step checklist state
+  const [checkedSteps, setCheckedSteps] = useState([]);
+
+  // Reset checklist when recipe changes
+  useEffect(() => {
+    if (recipeData && recipeData.howToCook) {
+      const steps = recipeData.howToCook.split('\n').filter(line => line.trim());
+      setCheckedSteps(Array(steps.length).fill(false));
+    }
+  }, [recipeData]);
+
+  // Handler for toggling step checkboxes
+  const toggleStep = (idx) => {
+    setCheckedSteps(prev =>
+      prev.map((val, i) => (i === idx ? !val : val))
+    );
   };
 
   return (
@@ -99,9 +50,7 @@ const RecipeDetailContent = ({
       {recipeData.mood && (
         <View style={styles.moodContainer}>
           <Text style={styles.moodLabel}>Mood: {recipeData.mood}</Text>
-          {getMoodImage(recipeData.mood) && (
-            <Image source={getMoodImage(recipeData.mood)} style={styles.moodImage} />
-          )}
+          <ChangeMoodImage mood={recipeData.mood} style={styles.moodImage} />
         </View>
       )}
       <View style={styles.section}>
@@ -110,7 +59,40 @@ const RecipeDetailContent = ({
       </View>
       <View style={styles.section}>
         <Text style={styles.sectionHeader}>How to Cook:</Text>
-        {renderNumberedList(recipeData.howToCook)}
+        {recipeData.howToCook &&
+          recipeData.howToCook
+            .split('\n')
+            .filter(line => line.trim())
+            .map((line, i) => (
+              howToCookChecklistEnabled ? (
+                <View key={i} style={styles.stepRow}>
+                  <TouchableOpacity
+                    style={styles.checkbox}
+                    onPress={() => toggleStep(i)}
+                  >
+                    {checkedSteps[i] ? (
+                      <Text style={styles.checkboxMark}>✓</Text>
+                    ) : (
+                      <Text style={styles.checkboxMark}></Text>
+                    )}
+                  </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.stepText,
+                      checkedSteps[i] && styles.stepTextChecked,
+                    ]}
+                  >
+                    {i + 1}. {line.trim()}
+                  </Text>
+                </View>
+              ) : (
+                <View key={i} style={styles.stepRow}>
+                  <Text style={styles.stepText}>
+                    {i + 1}. {line.trim()}
+                  </Text>
+                </View>
+              )
+            ))}
       </View>
       <View style={styles.dateContainer}>
         {recipeData.date && (
@@ -181,6 +163,36 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 10,
+  },
+  stepRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: "#F8D64E",
+    borderRadius: 6,
+    marginRight: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+  },
+  checkboxMark: {
+    fontSize: 18,
+    color: "#F8D64E",
+    fontWeight: "bold",
+  },
+  stepText: {
+    fontSize: 16,
+    color: "#555",
+    flex: 1,
+  },
+  stepTextChecked: {
+    textDecorationLine: "line-through",
+    color: "#bbb",
   },
   dateContainer: {
     marginTop: 20,

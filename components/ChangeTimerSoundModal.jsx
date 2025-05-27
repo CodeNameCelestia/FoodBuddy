@@ -6,12 +6,15 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 
-const soundOptions = [
+const soundOptionsBase = [
   { key: 'timer', displayName: 'Default' },
   { key: 'Bell', displayName: 'Bell' },
   { key: 'Maxwell', displayName: 'Maxwell' },
@@ -29,24 +32,38 @@ const soundMapping = {
   'Chipi-chipi': require('../assets/sfx/Chipi-chipi.mp3'),
   Megalovania: require('../assets/sfx/Megalovania.mp3'),
   CarelessWhisper: require('../assets/sfx/CarelessWhisper.mp3'),
+  // 'custom' will be handled dynamically
 };
+
+const CUSTOM_SOUND_KEY = 'customTimerSoundUri';
 
 const ChangeTimerSoundModal = ({ visible, onClose, onSelect }) => {
   const [selectedSound, setSelectedSound] = useState('timer');
   const [initialSound, setInitialSound] = useState(null);
+  const [customSoundUri, setCustomSoundUri] = useState(null);
+  const [soundOptions, setSoundOptions] = useState(soundOptionsBase);
   const soundSampleRef = useRef(null);
   const timeoutRef = useRef(null);
 
-  // Load saved sound from AsyncStorage when the modal becomes visible.
+  // Load saved sound and custom sound from AsyncStorage when the modal becomes visible.
   useEffect(() => {
     const loadSound = async () => {
       try {
         const storedSound = await AsyncStorage.getItem('timerSound');
+        const customUri = await AsyncStorage.getItem(CUSTOM_SOUND_KEY);
+        setCustomSoundUri(customUri);
+        if (customUri) {
+          setSoundOptions([
+            ...soundOptionsBase,
+            { key: 'custom', displayName: 'Custom Sound' },
+          ]);
+        } else {
+          setSoundOptions(soundOptionsBase);
+        }
         if (storedSound) {
           setSelectedSound(storedSound);
           setInitialSound(storedSound);
         } else {
-          // If nothing is stored, use default.
           setSelectedSound('timer');
           setInitialSound('timer');
         }
@@ -76,37 +93,63 @@ const ChangeTimerSoundModal = ({ visible, onClose, onSelect }) => {
     }
   };
 
-  // When selectedSound changes and is different from the initial sound, play a 10-second sample.
+  // Play sample for custom sound
   useEffect(() => {
     const playSample = async () => {
       await stopSampleSound();
       try {
-        const { sound } = await Audio.Sound.createAsync(soundMapping[selectedSound]);
+        let soundObj;
+        if (selectedSound === 'custom' && customSoundUri) {
+          // Extra check for null/empty URI
+          if (!customSoundUri || typeof customSoundUri !== 'string' || customSoundUri.trim() === '') {
+            Alert.alert('Custom sound not found', 'The custom sound file is missing or invalid. Reverting to default.');
+            await AsyncStorage.removeItem(CUSTOM_SOUND_KEY);
+            setCustomSoundUri(null);
+            setSoundOptions(soundOptionsBase);
+            setSelectedSound('timer');
+            return;
+          }
+          const fileInfo = await FileSystem.getInfoAsync(customSoundUri);
+          if (!fileInfo.exists) {
+            Alert.alert('Custom sound not found', 'The custom sound file is missing or invalid. Reverting to default.');
+            await AsyncStorage.removeItem(CUSTOM_SOUND_KEY);
+            setCustomSoundUri(null);
+            setSoundOptions(soundOptionsBase);
+            setSelectedSound('timer');
+            return;
+          }
+          soundObj = await Audio.Sound.createAsync({ uri: customSoundUri });
+        } else {
+          soundObj = await Audio.Sound.createAsync(soundMapping[selectedSound]);
+        }
+        const { sound } = soundObj;
         soundSampleRef.current = sound;
-        // Loop the sound sample.
         await sound.setIsLoopingAsync(true);
         await sound.playAsync();
-        // Stop the sample after 10 seconds.
         timeoutRef.current = setTimeout(async () => {
           await stopSampleSound();
         }, 10000);
       } catch (error) {
         console.error("Error playing sample sound:", error);
+        Alert.alert('Playback Error', 'Unable to play the selected sound.');
       }
     };
 
-    // Only play sample if the modal is visible and the selected sound is different from the initial one.
-    if (visible && selectedSound && initialSound && selectedSound !== initialSound) {
+    if (
+      visible &&
+      selectedSound &&
+      initialSound &&
+      selectedSound !== initialSound
+    ) {
       playSample();
     } else {
-      // Otherwise, ensure no sample is playing.
       stopSampleSound();
     }
 
     return () => {
       stopSampleSound();
     };
-  }, [selectedSound, visible, initialSound]);
+  }, [selectedSound, visible, initialSound, customSoundUri]);
 
   const handleSelectSound = (soundKey) => {
     // Only play sample if the new selection is different from the currently selected sound.
@@ -115,9 +158,71 @@ const ChangeTimerSoundModal = ({ visible, onClose, onSelect }) => {
     }
   };
 
+  // Handle uploading a custom sound
+  const handleUploadCustomSound = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'audio/*',
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled || !result.assets || !result.assets[0]?.uri) return;
+
+      // Only allow one custom sound: remove previous if exists
+      if (customSoundUri) {
+        try {
+          await FileSystem.deleteAsync(customSoundUri, { idempotent: true });
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // Copy the selected file to app's document directory
+      const pickedUri = result.assets[0].uri;
+      const fileName = 'custom_timer_sound' + pickedUri.substring(pickedUri.lastIndexOf('.'));
+      const destUri = FileSystem.documentDirectory + fileName;
+      await FileSystem.copyAsync({ from: pickedUri, to: destUri });
+
+      await AsyncStorage.setItem(CUSTOM_SOUND_KEY, destUri);
+      setCustomSoundUri(destUri);
+
+      // Add custom option if not present
+      setSoundOptions([
+        ...soundOptionsBase,
+        { key: 'custom', displayName: 'Custom Sound' },
+      ]);
+      setSelectedSound('custom');
+    } catch (error) {
+      console.error('Error uploading custom sound:', error);
+    }
+  };
+
   const handleSave = async () => {
     await stopSampleSound();
     try {
+      // If custom sound is selected but file is missing, fallback to default
+      if (selectedSound === 'custom' && customSoundUri) {
+        if (!customSoundUri || typeof customSoundUri !== 'string' || customSoundUri.trim() === '') {
+          Alert.alert('Custom sound not found', 'The custom sound file is missing or invalid. Reverting to default.');
+          await AsyncStorage.removeItem(CUSTOM_SOUND_KEY);
+          setCustomSoundUri(null);
+          setSoundOptions(soundOptionsBase);
+          await AsyncStorage.setItem('timerSound', 'timer');
+          if (onSelect) onSelect('timer');
+          onClose();
+          return;
+        }
+        const fileInfo = await FileSystem.getInfoAsync(customSoundUri);
+        if (!fileInfo.exists) {
+          Alert.alert('Custom sound not found', 'The custom sound file is missing or invalid. Reverting to default.');
+          await AsyncStorage.removeItem(CUSTOM_SOUND_KEY);
+          setCustomSoundUri(null);
+          setSoundOptions(soundOptionsBase);
+          await AsyncStorage.setItem('timerSound', 'timer');
+          if (onSelect) onSelect('timer');
+          onClose();
+          return;
+        }
+      }
       await AsyncStorage.setItem('timerSound', selectedSound);
       if (onSelect) {
         onSelect(selectedSound);
@@ -158,6 +263,15 @@ const ChangeTimerSoundModal = ({ visible, onClose, onSelect }) => {
               </Text>
             </TouchableOpacity>
           ))}
+          <TouchableOpacity
+            style={styles.uploadButton}
+            onPress={handleUploadCustomSound}
+          >
+            <Ionicons name="cloud-upload" size={22} color="#555" style={styles.optionIcon} />
+            <Text style={styles.uploadButtonText}>
+              {customSoundUri ? 'Replace Custom Sound' : 'Upload Custom Sound'}
+            </Text>
+          </TouchableOpacity>
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
               <Text style={styles.saveButtonText}>Save</Text>
@@ -244,5 +358,22 @@ const styles = StyleSheet.create({
     color: '#F00',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 5,
+    marginBottom: 10,
+    backgroundColor: '#f6f6f6',
+    marginTop: 5,
+  },
+  uploadButtonText: {
+    fontSize: 16,
+    color: '#555',
   },
 });

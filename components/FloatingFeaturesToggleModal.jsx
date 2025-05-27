@@ -18,6 +18,7 @@ const FloatingFeaturesToggleModal = ({
 }) => {
   const [floatingEnabled, setFloatingEnabled] = useState(true);
   const [timerEnabled, setTimerEnabled] = useState(true);
+  const [howToCookChecklistEnabled, setHowToCookChecklistEnabled] = useState(true);
 
   // Load saved toggles whenever modal becomes visible
   useEffect(() => {
@@ -25,8 +26,10 @@ const FloatingFeaturesToggleModal = ({
       try {
         const floatVal = await AsyncStorage.getItem('floatingEnabled');
         const timerVal = await AsyncStorage.getItem('timerEnabled');
+        const checklistVal = await AsyncStorage.getItem('howToCookChecklistEnabled');
         setFloatingEnabled(floatVal !== 'false'); // default to true if not set
         setTimerEnabled(timerVal !== 'false');    // default to true if not set
+        setHowToCookChecklistEnabled(checklistVal !== 'false');
       } catch (error) {
       }
     };
@@ -39,8 +42,9 @@ const FloatingFeaturesToggleModal = ({
     try {
       await AsyncStorage.setItem('floatingEnabled', floatingEnabled ? 'true' : 'false');
       await AsyncStorage.setItem('timerEnabled', timerEnabled ? 'true' : 'false');
+      await AsyncStorage.setItem('howToCookChecklistEnabled', howToCookChecklistEnabled ? 'true' : 'false');
       if (onToggleUpdate) {
-        onToggleUpdate({ floatingEnabled, timerEnabled });
+        onToggleUpdate({ floatingEnabled, timerEnabled, howToCookChecklistEnabled });
       }
       onClose();
     } catch (error) {
@@ -51,7 +55,7 @@ const FloatingFeaturesToggleModal = ({
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.modalBackground}>
         <View style={styles.modalContainer}>
-          <Text style={styles.title}>Floating Features</Text>
+          <Text style={styles.title}>Recipe Features</Text>
 
           <View style={styles.toggleRow}>
             <Text style={styles.label}>Floating Button</Text>
@@ -69,6 +73,16 @@ const FloatingFeaturesToggleModal = ({
               value={timerEnabled}
               onValueChange={setTimerEnabled}
               thumbColor={timerEnabled ? '#F8D64E' : '#ccc'}
+              trackColor={{ true: '#ffe299', false: '#ddd' }}
+            />
+          </View>
+
+          <View style={styles.toggleRow}>
+            <Text style={styles.label}>How to Cook Checklist</Text>
+            <Switch
+              value={howToCookChecklistEnabled}
+              onValueChange={setHowToCookChecklistEnabled}
+              thumbColor={howToCookChecklistEnabled ? '#F8D64E' : '#ccc'}
               trackColor={{ true: '#ffe299', false: '#ddd' }}
             />
           </View>
